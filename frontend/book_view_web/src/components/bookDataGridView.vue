@@ -2,7 +2,7 @@
   <DxDataGrid
     :data-source="bookObjects"
     :show-borders="true"
-    ref="test"
+    ref="bookDataGrid"
     :onRowRemoving="onRowRemoving"
     :onSaving="onSaving"
   >
@@ -65,15 +65,17 @@ export default {
     DxButton,
   },
   props: {
-    bookObjects:Array,
+    bookObjects: Array,
   },
   data() {
-    return {
-    };
+    return {};
   },
   created() {
     // this.getAllbooksInfo();
-    console.log(this.bookObjects)
+    // console.log(this.bookObjects);
+  },
+  updated() {
+    console.log("updated");
   },
   methods: {
     // getAllbooksInfo() {
@@ -90,6 +92,10 @@ export default {
     //       console.log(error);
     //     });
     // },
+    refreshDataGridSource() {
+      console.log("refreshDataGridSource");
+      this.$refs.bookDataGrid.instance.refresh();
+    },
     onRowRemoving(e) {
       console.log("bookRowRemoving", e.data.id);
       axios

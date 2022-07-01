@@ -12,19 +12,23 @@
           :height="auto"
           :animationEnabled="false"
         >
-          <DxItem title="信息管理列表">
-            <book-data-grid-view :bookObjects="bookObjects" />
+          <DxItem title="信息管理列表" @click="clickDataGirdTitle">
+            <book-data-grid-view
+              v-model:bookObjects="bookObjects"
+              ref="bookDataGrid"
+            />
           </DxItem>
           <DxItem title="封面视图">
             <book-cover-view
-              :bookObjects="bookObjects"
+              v-model:bookObjects="bookObjects"
               v-model:fullScreenViewMode="fullScreenViewMode"
               v-model:CurrentBookId="CurrentBookId"
               v-model:CurrentBookLength="CurrentBookLength"
             />
           </DxItem>
           <DxItem title="panel3">
-            <div>什么都没有</div>
+            <!-- <div>什么都没有</div> -->
+            <img src="http://127.0.0.1:8000/static/bookContent/0001.jxl" alt="">
           </DxItem>
         </DxTabPanel>
       </DxItem>
@@ -81,6 +85,11 @@ export default {
           // 处理错误情况
           console.log(error);
         });
+    },
+    clickDataGirdTitle() {
+      console.log("clickDataGirdTitle", this.$refs.bookDataGrid);
+      // this.$refs["test"].instance.refresh();
+      this.$refs.bookDataGrid.refreshDataGridSource();
     },
   },
 };

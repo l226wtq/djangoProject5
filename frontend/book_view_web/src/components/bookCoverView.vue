@@ -29,10 +29,16 @@
             /></el-col>
           </el-row>
           <div class="CoverItemsBody">
-            <img
+            <!-- <img
               :src="`http://127.0.0.1:8000/static/bookzips/covers/${item.id}.jpg`"
               alt="cover"
               class="coverPic"
+              @click="openFullScreenView(item.id)"
+            /> -->
+            <el-image
+              :src="`http://127.0.0.1:8000/static/bookzips/covers/${item.id}.jpg`"
+              class="coverPic"
+              fit="contain"
               @click="openFullScreenView(item.id)"
             />
           </div>
@@ -151,12 +157,13 @@ export default {
       this.$emit("update:fullScreenViewMode", true);
       this.$emit("update:CurrentBookId", id);
       //   console.log("点击的id", id, "CurrentBookId", this.CurrentBookId);
-      this.getBookZipInfoLength();
+      this.getBookZipInfoLength(id);
     },
-    getBookZipInfoLength() {
+    getBookZipInfoLength(id) {
       axios
-        .get("http://127.0.0.1:8000/genericbook/zip/26/")
+        .get(`http://127.0.0.1:8000/genericbook/zip/${id}/`)
         .then((response) => {
+          console.log("getBookZipInfoLength", response);
           this.$emit("update:CurrentBookLength", response.data);
         })
         .catch((response) => {
@@ -209,6 +216,7 @@ export default {
     },
     deleteSingleBook(item, index) {
       this.bookObjects.splice(index, 1);
+      console.log(this.bookObjects);
       this.deleteSingleBookInfo(item);
     },
   },

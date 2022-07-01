@@ -119,14 +119,14 @@ class BookInfoSingleZip(ViewSet):
         try:
             book = Book.objects.get(id=pk)
         except Book.DoesNotExist:
-            return Response(status.HTTP_404_NOT_FOUND)
+            return Response(status=status.HTTP_404_NOT_FOUND)
         ser = BookInfoSerializer(book)
         # print(ser.data['title'])
         bookTitle = ser.data['title']
         if os.path.exists(f'''./app01/static/bookZips/{bookTitle}.zip'''):
             bookZip = zipfile.ZipFile(f'''./app01/static/bookZips/{bookTitle}.zip''', mode="r")
         else:
-            return Response(status.HTTP_404_NOT_FOUND)
+            return Response(status=status.HTTP_404_NOT_FOUND)
         # print([item for item in bookZip.infolist() if not item.is_dir()])
         return HttpResponse([item for item in bookZip.infolist() if not item.is_dir()].__len__())
         # for item in bookZip.infolist():
@@ -140,7 +140,7 @@ class BookInfoSingleZip(ViewSet):
         try:
             book = Book.objects.get(id=pk)
         except Book.DoesNotExist:
-            return Response(status.HTTP_404_NOT_FOUND)
+            return Response(status=status.HTTP_404_NOT_FOUND)
         ser = BookInfoSerializer(book)
         bookTitle = ser.data['title']
         # picHeight=request.query_params['height']
@@ -148,7 +148,7 @@ class BookInfoSingleZip(ViewSet):
         if os.path.exists(f'''./app01/static/bookZips/{bookTitle}.zip'''):
             bookZip = zipfile.ZipFile(f'''./app01/static/bookZips/{bookTitle}.zip''', mode="r")
         else:
-            return Response(status.HTTP_404_NOT_FOUND)
+            return Response(status=status.HTTP_404_NOT_FOUND)
         # print([item for item in bookZip.infolist() if not item.is_dir()])
         picList = [item for item in bookZip.infolist() if not item.is_dir()]
         return HttpResponse(bookZip.read(picList[page - 1]), content_type='image/jpg')
@@ -164,7 +164,7 @@ class BookInfoAPIViewSet(ViewSet):
         try:
             book = Book.objects.get(id=pk)
         except Book.DoesNotExist:
-            return Response(status.HTTP_404_NOT_FOUND)
+            return Response(status=status.HTTP_404_NOT_FOUND)
         ser = BookInfoSerializer(book)
         return Response(ser.data)
 
@@ -174,7 +174,7 @@ class BookCoverApiView(APIView):
         try:
             book = Book.objects.get(id=pk)
         except Book.DoesNotExist:
-            return Response(status.HTTP_404_NOT_FOUND)
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 # class BookInfoGenericApiViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):  # 全靠指定Mixin就能使用简单的协议方法

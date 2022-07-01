@@ -1,6 +1,7 @@
 import os
 import zipfile, zipp
 from PIL import Image
+import subprocess
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "djangoProject5.settings")
 import django
@@ -63,8 +64,19 @@ class bookManager:
         else:
             print("no exists")
 
+    def jxlTest(self):
+        print(subprocess.run('..\\utils\\cjxl.exe .\\static\\bookContent\\0001.jpg .\\static\\bookContent\\0001.jxl', shell=True, stdout=subprocess.PIPE).stdout.decode('gbk'))
+        # print(subprocess.run('..\\utils\\cjxl.exe -h', shell=True, stdout=subprocess.PIPE).stdout.decode('gbk'))
+        # p = subprocess.Popen('ping baidu.com',
+        #                      stdin=subprocess.PIPE,
+        #                      stdout=subprocess.PIPE,
+        #                      stderr=subprocess.PIPE, shell=True)
+        # out = p.stdout.read().decode('gbk')
+        # print(out)
+
 
 bm = bookManager()
-bm.scanDirbooks()
-bm.addtoDB()
+# bm.scanDirbooks()
+# bm.addtoDB()
 # bm.generateCover("真·中华小当家 Vol.01",1)
+bm.jxlTest()
