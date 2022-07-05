@@ -35,7 +35,7 @@
               <DxTreeView
                 id="simple-treeview"
                 :items="TreeNavItem"
-                :width="300"
+                :width="240"
                 :select-by-click="true"
                 @itemClick="selectItem"
               />
@@ -53,7 +53,7 @@
                 <div>
                   <DxTabPanel
                     v-model:dataSource="tabIndexList"
-                    height="800px"
+                    height="calc(100vh - 132px)"
                     :defer-rendering="false"
                     :show-nav-buttons="true"
                     :repaint-changes-only="true"
@@ -223,18 +223,6 @@ export default {
           title: "主页",
           router: "homepage",
         },
-        // {
-        //   title: "入库管理",
-        //   router: "warehousing",
-        // },
-        // {
-        //   title: "出库管理",
-        //   router: "",
-        // },
-        // {
-        //   title: "SQL文档",
-        //   router: "sqldocument",
-        // },
       ],
 
       tabSelectedItem: {},

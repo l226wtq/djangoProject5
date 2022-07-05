@@ -10,7 +10,7 @@ from rest_framework.mixins import ListModelMixin, CreateModelMixin, RetrieveMode
 from rest_framework import status
 
 from BaseOrm import DictToModel
-from app01.models import Book, GoodsInventory, GoodsList, BoundJournalList, sqlStatementDocument
+from app01.models import Book, GoodsInventory, GoodsList, BoundJournalList, sqlStatementDocument, sqlSingleStatmentList
 from django.utils import timezone
 import json
 import zipfile
@@ -145,13 +145,14 @@ class BookInfoSingleZip(ViewSet):
         bookTitle = ser.data['title']
         # picHeight=request.query_params['height']
         # picWidth=request.query_params['width']
-        if os.path.exists(f'''./app01/static/bookZips/{bookTitle}.zip'''):
-            bookZip = zipfile.ZipFile(f'''./app01/static/bookZips/{bookTitle}.zip''', mode="r")
+        if os.path.exists(f'''./app01/static/bookZips/{bookTitle}[jxl].zip'''):
+            bookZip = zipfile.ZipFile(f'''./app01/static/bookZips/{bookTitle}[jxl].zip''', mode="r")
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
         # print([item for item in bookZip.infolist() if not item.is_dir()])
         picList = [item for item in bookZip.infolist() if not item.is_dir()]
-        return HttpResponse(bookZip.read(picList[page - 1]), content_type='image/jpg')
+        # return HttpResponse(bookZip.read(picList[page - 1]), content_type='image/jpg')
+        return HttpResponse(bookZip.read(picList[page - 1]), content_type='image/jxl')
 
 
 class BookInfoAPIViewSet(ViewSet):
@@ -228,6 +229,9 @@ class sqlStatementDocumentGenericApiViewSet(ModelViewSet):
             return Response(serializer.data)
         else:
             return super().list(request, *args, **kwargs)
+
+    def test(self):
+        print(sqlSingleStatmentList.objects.filter(sqlID=1))
 
 
 def getAllBooksInfo(request):

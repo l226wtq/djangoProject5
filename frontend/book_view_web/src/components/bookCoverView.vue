@@ -36,7 +36,7 @@
               @click="openFullScreenView(item.id)"
             /> -->
             <el-image
-              :src="`http://127.0.0.1:8000/static/bookzips/covers/${item.id}.jpg`"
+              :src="`http://127.0.0.1:8000/static/bookzips/covers/${item.id}.webp`"
               class="coverPic"
               fit="contain"
               @click="openFullScreenView(item.id)"

@@ -10,9 +10,17 @@
     :filterValue="datagridFilter"
     key-expr="id"
     :onRowInserted="afterAddRow"
+    :onRowUpdated="afterRowUpdate"
   >
+    <DxPaging :page-size="10" />
+    <DxPager
+      :visible="true"
+      :show-page-size-selector="true"
+      :show-info="true"
+      :show-navigation-buttons="true"
+    />
     <DxEditing
-      :allow-updating="false"
+      :allow-updating="true"
       :allow-deleting="false"
       :allow-adding="true"
       mode="popup"
@@ -179,6 +187,7 @@
 import DxButton from "devextreme-vue/button";
 import {
   DxPaging,
+  DxPager,
   DxScrolling,
   DxColumnFixing,
   DxHeaderFilter,
@@ -202,6 +211,7 @@ export default {
   components: {
     DxLookup,
     DxPaging,
+    DxPager,
     DxScrolling,
     DxColumnFixing,
     DxHeaderFilter,
@@ -303,6 +313,23 @@ export default {
           console.log(error);
         });
     },
+    afterRowUpdate(event) {
+      console.log("afterRowUpdate", event);
+      this.updateSqlDocument(event.data);
+    },
+    updateSqlDocument(updateData) {
+      console.log("updateData", updateData);
+      axios
+        .put(`http://127.0.0.1:8000/genericviewsqlstatment/${updateData.id}/`, updateData)
+        .then((response) => {
+          // 处理成功情况
+          console.log("after genericviewsqlstatment", response);
+        })
+        .catch((error) => {
+          // 处理错误情况
+          console.log(error);
+        });
+    },
   },
 };
 </script>
@@ -328,7 +355,7 @@ export default {
   overflow: auto;
 }
 
-#sqlStatmentExplanationTextArea{
+#sqlStatmentExplanationTextArea {
   border-style: hidden;
 }
 </style>
