@@ -1,7 +1,9 @@
-import os,shutil
+import os, shutil
 import zipfile, zipp
 from PIL import Image
+import configparser
 import subprocess
+
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "djangoProject5.settings")
 import django
@@ -11,7 +13,9 @@ from app01.models import Book
 
 
 class bookManager:
-    bookPath = "C:\\Users\\lyy\\PycharmProjects\\djangoProject5\\app01\\static\\bookZips"
+    conf = configparser.ConfigParser()
+    conf.read(".\\TEST.ini")
+    bookPath = conf.defaults()['bookzipspath']
     resultList = []
 
     def scanDirbooks(self):
