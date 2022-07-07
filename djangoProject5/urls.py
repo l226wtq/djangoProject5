@@ -46,7 +46,7 @@ urlpatterns = [
     path("genericviewsqlstatment/<int:pk>/",
          views.sqlStatementDocumentGenericApiViewSet.as_view({'get': 'retrieve', 'put': 'update'})),
     path("genericviewsqlstatment/test/",
-         views.sqlStatementDocumentGenericApiViewSet.as_view({'get': 'test'})),
+         views.sqlStatementDocumentGenericApiViewSet.as_view({'get': 'allsingleStatments'})),
     # path("genericviewsqlstatment/<str:sysType>",
     #      views.sqlStatementDocumentGenericApiViewSet.as_view({'get': 'list', 'post': 'create', 'put': 'update'}))
 ]

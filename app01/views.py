@@ -20,7 +20,7 @@ from rest_framework import routers, serializers, viewsets
 
 # Create your views here.
 from app01.serialzers import BookInfoSerializer, GoodsInventorySerializer, GoodsListSerializer, \
-    BoundJournalListSerializer, SqlStatementDocumentSerializer
+    BoundJournalListSerializer, SqlStatementDocumentSerializer, SqlSingleStatmentListSerializer
 
 
 class BookInfoView(ModelViewSet):  # 包含全部的Mixin类
@@ -217,21 +217,15 @@ class sqlStatementDocumentGenericApiViewSet(ModelViewSet):
     queryset = sqlStatementDocument.objects.all()
 
     def list(self, request, *args, **kwargs):
-        if kwargs.get('sysType') == 'renshi':
-            queryset = self.filter_queryset(self.get_queryset().filter(sysType='renshi'))
+        queryset = sqlStatementDocument.objects.all()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
-            page = self.paginate_queryset(queryset)
-            if page is not None:
-                serializer = self.get_serializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
-
-            serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data)
-        else:
-            return super().list(request, *args, **kwargs)
-
-    def test(self):
-        print(sqlSingleStatmentList.objects.filter(sqlID=1))
+    def allsingleStatments(self, request):
+        queryset = sqlStatementDocument.objects.all()
+        ser = SqlStatementDocumentSerializer(queryset, many=True)
+        # print(queryset.author)
+        return Response(ser.data)
 
 
 def getAllBooksInfo(request):

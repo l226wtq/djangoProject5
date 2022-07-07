@@ -109,42 +109,32 @@
       data-type="boolean"
     />
     <DxColumn
-      data-field="sqlStatment"
+      data-field="sqls[0].sqlStatment"
       caption="SQL语句"
       width="45%"
-      cellTemplate="sqlStatmentTextArea"
-      data-type="string"
+      cellTemplate='sqlStatmentTextArea'
     />
     <template #sqlStatmentTextArea="{ data: dataObj }">
       <div class="sqlStatmentTextArea">
-        <!-- <DxTextArea
-          :height="100"
-          :max-length="1000"
-          v-model:value="dataObj.data.sqlStatment"
-          placeholder="SQL语句"
-          :readOnly="true"
-          style="width: calc(100% - 0px)"
-        >
-        </DxTextArea> -->
         <highlightjs
           id="sqlHljs"
           language="sql"
-          :code="dataObj.data.sqlStatment"
+          :code="dataObj.value"
           style="width: calc(100% - 50px)"
         />
 
         <DxButton
           icon="copy"
-          v-clipboard:copy="dataObj.data.sqlStatment"
+          v-clipboard:copy="dataObj.value"
           style="width: 50px"
         />
       </div>
     </template>
     <DxColumn
-      data-field="sqlExplanation"
+      data-field="sqls[0].sqlExplanation"
       width="23%"
       caption="SQL注释说明"
-      cellTemplate="sqlStatmentExplanationTextArea"
+      cellTemplate='sqlStatmentExplanationTextArea'
       data-type="string"
     />
     <!-- <DxTextArea
@@ -163,7 +153,7 @@
         :minHeight="50"
         :maxHeight="300"
         id="sqlStatmentExplanationTextArea"
-        v-model:value="dataObj.data.sqlExplanation"
+        :value="dataObj.value"
         placeholder="SQL语句说明"
         :readOnly="true"
       />
@@ -240,8 +230,15 @@ export default {
           sysType: "",
           tpye: "",
           enable: false,
-          sqlStatment: "",
-          sqlExplanation: "",
+          sqls: [
+            {
+              id: 0,
+              sqlStatment: "",
+              sqlExplanation: "",
+              author: "",
+              sqlID: 0,
+            },
+          ],
         },
       ],
       popupVisible: false,
@@ -269,6 +266,10 @@ export default {
         return "";
       }
     },
+    lastonesSqlStatment(data) {
+      console.log("this.sqlStatments.sqls",this.sqlStatments,data);
+      return this.sqlStatments[0].sqls[0].sqlStatment
+    },
   },
   created() {
     this.getsqlDocument();
@@ -287,8 +288,15 @@ export default {
         .get("http://127.0.0.1:8000/genericviewsqlstatment/")
         .then((response) => {
           // 处理成功情况
+          response.data
+          let temp = 
           this.sqlStatments = response.data;
-          console.log("genericviewsqlstatment", response);
+          console.log(
+            "genericviewsqlstatment",
+            response,
+            "this.sqlStatments.sqls.length",
+            this.sqlStatments[0].sqls.length
+          );
         })
         .catch((error) => {
           // 处理错误情况
@@ -320,7 +328,10 @@ export default {
     updateSqlDocument(updateData) {
       console.log("updateData", updateData);
       axios
-        .put(`http://127.0.0.1:8000/genericviewsqlstatment/${updateData.id}/`, updateData)
+        .put(
+          `http://127.0.0.1:8000/genericviewsqlstatment/${updateData.id}/`,
+          updateData
+        )
         .then((response) => {
           // 处理成功情况
           console.log("after genericviewsqlstatment", response);

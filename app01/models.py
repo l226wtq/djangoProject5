@@ -65,12 +65,15 @@ class sqlStatementDocument(models.Model):
                                default=sysTypeName.RENSHI)
     type = models.CharField(choices=sqlType.choices, default=sqlType.SEARCH, max_length=10, verbose_name="SQL操作类型")
     enable = models.BooleanField(verbose_name="启用状态")
-    sqlStatment = models.TextField(verbose_name="SQL语句")
-    sqlExplanation = models.TextField(verbose_name="SQL注释说明")
+    # sqlStatment = models.TextField(verbose_name="SQL语句")
+    # sqlExplanation = models.TextField(verbose_name="SQL注释说明")
 
 
 class sqlSingleStatmentList(models.Model):
     sqlStatment = models.TextField(verbose_name="SQL语句")
     sqlExplanation = models.TextField(verbose_name="SQL注释说明")
     author = models.CharField(max_length=100, verbose_name="作者", default="未知作者")
-    sqlID = models.ForeignKey('sqlStatementDocument', on_delete=models.CASCADE)
+    sqlID = models.ForeignKey('sqlStatementDocument', on_delete=models.CASCADE,related_name='sqls1')
+
+    class Meta:
+        ordering = ["-id"]

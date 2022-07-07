@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 # Serializers define the API representation.
-from app01.models import Book, GoodsInventory, GoodsList, BoundJournalList, sqlStatementDocument
+from app01.models import Book, GoodsInventory, GoodsList, BoundJournalList, sqlStatementDocument, sqlSingleStatmentList
 
 
 #
@@ -40,7 +40,17 @@ class BoundJournalListSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class SqlSingleStatmentListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = sqlSingleStatmentList
+        # fields = ('author', 'sqlStatment', 'sqlExplanation', 'id', 'sqlID')
+        fields = "__all__"
+
+
 class SqlStatementDocumentSerializer(serializers.ModelSerializer):
+    # sqls = SqlSingleStatmentListSerializer(many=True, read_only=True)
     class Meta:
         model = sqlStatementDocument
-        fields = "__all__"
+        fields = ('id', 'name', 'sysType', 'type', 'enable', 'sqls1')
+
+        depth=1  # 还可以这么搞
