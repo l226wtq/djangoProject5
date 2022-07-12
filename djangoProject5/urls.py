@@ -41,6 +41,8 @@ urlpatterns = [
     path("genericviewgoodslist/numslist/", views.GoodsListNumsListGenericApi.as_view()),
     path("genericviewboundjournallist/",
          views.BoundJournalListGenericApiViewSet.as_view({'get': 'list', 'post': "create"})),
+
+
     path("genericviewsqlstatment/",
          views.sqlStatementDocumentGenericApiViewSet.as_view({'get': 'list', 'post': 'create'})),
     path("genericviewsqlstatment/<int:pk>/",

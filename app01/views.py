@@ -12,6 +12,7 @@ from rest_framework import status
 from BaseOrm import DictToModel
 from app01.models import Book, GoodsInventory, GoodsList, BoundJournalList, sqlStatementDocument, sqlSingleStatmentList
 from django.utils import timezone
+# from app01.forms import newSqlForm
 import json
 import zipfile
 import os
@@ -216,16 +217,81 @@ class sqlStatementDocumentGenericApiViewSet(ModelViewSet):
     serializer_class = SqlStatementDocumentSerializer
     queryset = sqlStatementDocument.objects.all()
 
-    def list(self, request, *args, **kwargs):
-        queryset = sqlStatementDocument.objects.all()
-        serializer = self.get_serializer(queryset, many=True)
+    # def list(self, request, *args, **kwargs):
+    #     queryset = sqlStatementDocument.objects.all()
+    #     serializer = self.get_serializer(queryset, many=True)
+    #     return Response(serializer.data)
+
+    # def create(self, request, *args, **kwargs):
+    #     serializer = self.get_serializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     self.perform_create(serializer)
+    #     headers = self.get_success_headers(serializer.data)
+    #     sqlSingleStatmentList.objects.create(sqlStatment=request.data['lastSqlStatment'],
+    #                                          sqlExplanation=request.data['lastsqlExplanation'],
+    #                                          author='lyyTest',
+    #                                          sqlID=sqlStatementDocument.objects.get(id=serializer.data['id']))
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    # form = newSqlForm(request.data)
+    # sqlSingleStatmentList.objects.create(
+    #     sqlID=sqlStatementDocument.objects.create(name='测试2', sysType="x", type="a", enable=True),
+    #     sqlStatment="select * from", sqlExplanation="x", author="x")
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        sqlSingleStatmentList.objects.create(sqlStatment=request.data['lastestSqlStatment'],
+                                             sqlExplanation=request.data['lastestSqlExplanation'],
+                                             sqlID=sqlStatementDocument.objects.get(id=serializer.data['id']))
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+    # def allsingleStatments(self, request):
+    #     # queryset = sqlStatementDocument.objects.all()
+    #     # ser = SqlStatementDocumentSerializer(queryset, many=True)
+    #     # # print(queryset.author)
+    #     # return Response(ser.data)
+    #     # queryset = sqlStatementDocument.objects.all()
+    #     form = newSqlForm(request.data)
+    def retrieve(self, request, *args, **kwargs):
+        qs = sqlSingleStatmentList.objects.filter(sqlID=kwargs['pk']).all()
+        ser = SqlSingleStatmentListSerializer(qs, many=True)
+        return Response(ser.data)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        # print(instance.name, instance.lastestSqlStatment, instance.lastestSqlExplanation)
+        if (request.data['lastestSqlStatment'] != instance.lastestSqlStatment or request.data[
+            'lastestSqlExplanation'] != instance.lastestSqlExplanation):
+            print('有修改')
+            sqlSingleStatmentList.objects.create(sqlStatment=request.data['lastestSqlStatment'],
+                                                 sqlExplanation=request.data['lastestSqlExplanation'],
+                                                 sqlID=sqlStatementDocument.objects.get(id=instance.id))
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
         return Response(serializer.data)
 
-    def allsingleStatments(self, request):
-        queryset = sqlStatementDocument.objects.all()
-        ser = SqlStatementDocumentSerializer(queryset, many=True)
-        # print(queryset.author)
-        return Response(ser.data)
+    def perform_update(self, serializer):
+        serializer.save()
+
+
+class sqlSingleStatmentListApiViewSet(ModelViewSet):
+    serializer_class = SqlSingleStatmentListSerializer
+    queryset = sqlSingleStatmentList.objects.all()
 
 
 def getAllBooksInfo(request):

@@ -9,6 +9,7 @@
     :column-auto-width="true"
     :filterValue="datagridFilter"
     key-expr="id"
+    :onInitNewRow="onInitNewRow"
     :onRowInserted="afterAddRow"
     :onRowUpdated="afterRowUpdate"
   >
@@ -30,7 +31,8 @@
         :width="1280"
         :height="820"
         title="新建SQL文档"
-      />
+      >
+      </DxPopup>
       <DxForm :col-count="4">
         <DxItem :col-count="4" :col-span="4" item-type="group">
           <DxItem data-field="name" :col-span="4" />
@@ -48,23 +50,18 @@
             cssClass="popSqlStatmentTextArea"
             :col-span="4"
             :editor-options="{ height: 300 }"
-            data-field="sqlStatment"
+            data-field="lastestSqlStatment"
             editor-type="dxTextArea"
           />
 
           <DxItem
             cssClass="popSqlExplanationTextArea"
             :col-span="4"
-            :editor-options="{ height: 150 }"
-            data-field="sqlExplanation"
+            :editor-options="{ height: 135 }"
+            data-field="lastestSqlExplanation"
             editor-type="dxTextArea"
           />
-          <DxItem
-            data-field="enable"
-            :col-span="1"
-            editor-type="dxCheckBox"
-            :editor-options="checkBoxOptions"
-          />
+          <DxItem data-field="enable" :col-span="1" />
         </DxItem>
       </DxForm>
     </DxEditing>
@@ -102,17 +99,13 @@
       >
       </DxLookup>
     </DxColumn>
+    <DxColumn data-field="enable" caption="启用状态" data-type="boolean">
+    </DxColumn>
     <DxColumn
-      data-field="enable"
-      width="5%"
-      caption="启用状态"
-      data-type="boolean"
-    />
-    <DxColumn
-      data-field="sqls[0].sqlStatment"
+      data-field="lastestSqlStatment"
       caption="SQL语句"
       width="45%"
-      cellTemplate='sqlStatmentTextArea'
+      cellTemplate="sqlStatmentTextArea"
     />
     <template #sqlStatmentTextArea="{ data: dataObj }">
       <div class="sqlStatmentTextArea">
@@ -122,19 +115,28 @@
           :code="dataObj.value"
           style="width: calc(100% - 50px)"
         />
-
-        <DxButton
-          icon="copy"
-          v-clipboard:copy="dataObj.value"
-          style="width: 50px"
-        />
+        <div id="viewButtonGroup">
+          <DxButton
+            icon="copy"
+            text="复制SQL"
+            v-clipboard:copy="dataObj.value"
+            style="width: 150px"
+          />
+          <DxButton
+            icon="comment"
+            text="查看SQL记录"
+            style="width: 150px"
+            @click="viewSqlsPopup(event, dataObj)"
+          >
+          </DxButton>
+        </div>
       </div>
     </template>
     <DxColumn
-      data-field="sqls[0].sqlExplanation"
+      data-field="lastestSqlExplanation"
       width="23%"
       caption="SQL注释说明"
-      cellTemplate='sqlStatmentExplanationTextArea'
+      cellTemplate="sqlStatmentExplanationTextArea"
       data-type="string"
     />
     <!-- <DxTextArea
@@ -170,10 +172,75 @@
       </DxItem> -->
     </DxToolbar>
   </DxDataGrid>
+  <DxPopup
+    v-model:visible="popupVisible"
+    :dragEnabled="true"
+    :show-close-button="true"
+    :show-title="true"
+    :width="1280"
+    :height="760"
+    title="sql记录"
+  >
+    <DxDataGrid
+      id=""
+      class="table-page"
+      :show-borders="true"
+      :show-row-lines="true"
+      :data-source="sqls"
+      :allow-column-resizing="true"
+      :column-auto-width="true"
+      height="calc(100vh - )"
+      no-data-text="无数据"
+      @cellHoverChanged="onCellHoverChanged"
+    >
+      <DxPaging :page-size="5" />
+      <DxEditing
+        :allow-updating="false"
+        :allow-deleting="false"
+        :allow-adding="false"
+        mode="row"
+      />
+      <DxScrolling mode="standard" row-rendering-mode="standard" />
+      <DxColumnFixing :enabled="true" />
+      <DxHeaderFilter :visible="true" />
+      <!-- <DxFilterRow :visible="true" apply-filter="auto" /> -->
+      <DxColumn data-field="id" caption="ID(倒序)" alignment="left" width="90px"> </DxColumn>
+      <DxColumn
+        data-field="sqlStatment"
+        caption="sql语句记录"
+        alignment="left"
+        cellTemplate="sqlStatmentDetailsTextArea"
+      ></DxColumn>
+      <template #sqlStatmentDetailsTextArea="{ data: dataObj }">
+        <highlightjs id="sqlHljs" language="sql" :code="dataObj.value" />
+      </template>
+      <DxColumn
+        data-field="sqlExplanation"
+        caption="sql注释说明记录"
+        alignment="left"
+        cellTemplate="sqlStatmentExplanationDetailsTextArea"
+      ></DxColumn>
+      <template #sqlStatmentExplanationDetailsTextArea="{ data: dataObj }">
+        <!-- <p name="" id="ss" class="ss" readonly>
+        {{ dataObj.data.sqlExplanation }}
+      </p> -->
+        <DxTextArea
+          :autoResizeEnabled="true"
+          :minHeight="50"
+          :maxHeight="300"
+          id="sqlStatmentExplanationTextArea"
+          :value="dataObj.value"
+          placeholder="SQL语句说明"
+          :readOnly="true"
+        />
+      </template>
+      <!-- Summary -->
+    </DxDataGrid>
+  </DxPopup>
 </template>
 
 <script>
-// import { DxPopup, DxPosition, DxToolbarItem } from "devextreme-vue/popup";
+import { DxPopup, DxPosition, DxToolbarItem } from "devextreme-vue/popup";
 import DxButton from "devextreme-vue/button";
 import {
   DxPaging,
@@ -191,8 +258,8 @@ import {
   DxToolbar,
   DxItem,
   DxLookup,
-  DxPopup,
   DxForm,
+  DxRequiredRule,
 } from "devextreme-vue/data-grid";
 import DxTextArea from "devextreme-vue/text-area";
 import axios from "axios";
@@ -219,6 +286,7 @@ export default {
     DxItem,
     DxPopup,
     DxForm,
+    DxRequiredRule,
   },
 
   data() {
@@ -227,20 +295,14 @@ export default {
         {
           id: 0,
           name: "0",
-          sysType: "",
+          sysType: "1",
           tpye: "",
-          enable: false,
-          sqls: [
-            {
-              id: 0,
-              sqlStatment: "",
-              sqlExplanation: "",
-              author: "",
-              sqlID: 0,
-            },
-          ],
+          enable: true,
+          lastestSqlStatment: "",
+          lastestSqlExplanation: "",
         },
       ],
+      sqls: [{ id: 0, sqlStatment: "", sqlExplanation: "" }],
       popupVisible: false,
       typeDefine: [
         { type: "sear", displayName: "搜索" },
@@ -260,23 +322,28 @@ export default {
     datagridFilter() {
       if (this.$route.params.sysType != undefined) {
         return ["sysType", "=", this.$route.params.sysType];
-        console.log("$route.params111", this.$route.params.sysType);
       } else {
         console.log("$route.params={}", this.$route.params.sysType);
         return "";
       }
-    },
-    lastonesSqlStatment(data) {
-      console.log("this.sqlStatments.sqls",this.sqlStatments,data);
-      return this.sqlStatments[0].sqls[0].sqlStatment
     },
   },
   created() {
     this.getsqlDocument();
   },
   methods: {
+    onInitNewRow(e) {
+      console.log("onInitNewRow", e);
+      e.data.enable = true;  //默认值为true
+      if (this.$route.params.sysType != undefined) {
+        e.data.sysType=this.$route.params.sysType;
+      } else {
+        console.log("$route.params={}", this.$route.params.sysType);
+        return "";
+      }
+    },
     add(e) {
-      console.log(e);
+      console.log("add", e);
       this.$refs.tool.instance.addRow();
     },
     afterAddRow(event) {
@@ -288,15 +355,21 @@ export default {
         .get("http://127.0.0.1:8000/genericviewsqlstatment/")
         .then((response) => {
           // 处理成功情况
-          response.data
-          let temp = 
           this.sqlStatments = response.data;
-          console.log(
-            "genericviewsqlstatment",
-            response,
-            "this.sqlStatments.sqls.length",
-            this.sqlStatments[0].sqls.length
-          );
+          console.log("genericviewsqlstatment", response);
+        })
+        .catch((error) => {
+          // 处理错误情况
+          console.log(error);
+        });
+    },
+    getSqls(id) {
+      axios
+        .get(`http://127.0.0.1:8000/genericviewsqlstatment/${id}/`)
+        .then((response) => {
+          // 处理成功情况
+          this.sqls = response.data;
+          console.log("getSqls", response);
         })
         .catch((error) => {
           // 处理错误情况
@@ -322,7 +395,7 @@ export default {
         });
     },
     afterRowUpdate(event) {
-      console.log("afterRowUpdate", event);
+      console.log("afterRowUpdate", event, this.sqlStatments);
       this.updateSqlDocument(event.data);
     },
     updateSqlDocument(updateData) {
@@ -340,6 +413,11 @@ export default {
           // 处理错误情况
           console.log(error);
         });
+    },
+    viewSqlsPopup(event, obj) {
+      console.log("点击了viewSqlsPopup", event, obj.data.id);
+      this.popupVisible = !this.popupVisible;
+      this.getSqls(obj.data.id);
     },
   },
 };
@@ -368,5 +446,12 @@ export default {
 
 #sqlStatmentExplanationTextArea {
   border-style: hidden;
+}
+
+#viewButtonGroup {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 </style>

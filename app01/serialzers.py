@@ -47,10 +47,36 @@ class SqlSingleStatmentListSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class testSerializer(serializers.ModelSerializer):
+    sql1 = serializers.SerializerMethodField()
+
+    class Meta:
+        model = sqlSingleStatmentList
+
+    def sql1(self):
+        qs = sqlSingleStatmentList.objects.filter(sqlID=id, )
+
+
 class SqlStatementDocumentSerializer(serializers.ModelSerializer):
     # sqls = SqlSingleStatmentListSerializer(many=True, read_only=True)
+    # sqls = serializers.PrimaryKeyRelatedField(queryset=sqlSingleStatmentList.objects.all(), many=True)
+    # lastSqlStatment = serializers.SerializerMethodField('get_lastSqlStatment')
+    # lastsqlExplanation = serializers.SerializerMethodField('get_lastsqlExplanation')
+    #
+    # def get_lastSqlStatment(self, sql):
+    #     qs = sqlSingleStatmentList.objects.filter(sqlID=sql.id).first()
+    #     ser = SqlSingleStatmentListSerializer(instance=qs)
+    #     # print(ser.data['sqlStatment'])
+    #     return ser.data['sqlStatment']
+    #
+    # def get_lastsqlExplanation(self, sql):
+    #     qs = sqlSingleStatmentList.objects.filter(sqlID=sql.id).first()
+    #     ser = SqlSingleStatmentListSerializer(instance=qs)
+    #     return ser.data['sqlExplanation']
+
     class Meta:
         model = sqlStatementDocument
-        fields = ('id', 'name', 'sysType', 'type', 'enable', 'sqls1')
+        # fields = ('id', 'name', 'sysType', 'type', 'enable', 'lastSqlStatment', 'lastsqlExplanation')
+        fields = "__all__"
+        # depth=1  # 还可以这么搞
 
-        depth=1  # 还可以这么搞

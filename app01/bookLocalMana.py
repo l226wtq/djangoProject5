@@ -117,53 +117,83 @@ class bookManager:
         # rf = rarfile.RarFile('NO.106')
         # for f in rf.infolist():
         #     print(f.filename, f.file_size)
-
+        passwordList = ['123456', '1234567890', '12321312', '123456789', '1231241']
         for root, dirs, files in os.walk('.\\archives0\\'):
             for file in files:
                 kind = filetype.guess(f'''{root}\\{file}''')
                 fileTuple = os.path.splitext(f'''{root}\\{file}''')
                 try:
                     ext = kind.extension
-                    print(f'''{root}\\{file}''', ext)
-                    if (ext == '7z' and fileTuple[1] == '.001'):
-                        with multivolumefile.open(fileTuple[0], mode='rb') as target_archive:
-                            with py7zr.SevenZipFile(target_archive, mode='r') as archieve:
-                                archieve.extractall(path=f'''{root}'''.replace('archives0', 'archives1'))
-                    if (ext == '7z'):
-                        archieve = py7zr.SevenZipFile(f'''{root}\\{file}''', mode='r', )  # 密码在这里写
-                        archieve.extractall(path=f'''{root}'''.replace('archives0', 'archives1'))
-                        archieve.close()
-                    if (ext == 'rar'):
-                        archieve = rarfile.RarFile(f'''{root}\\{file}''', mode='r', )
-                        archieve.extractall(path=f'''{root}'''.replace('archives0', 'archives1'), pwd='123456')
-                    if (ext == 'zip'):
-                        archieve = zipfile.ZipFile(f'''{root}\\{file}''', mode='r')
-                        archieve.extractall(path=f'''{root}'''.replace('archives0', 'archives1'), pwd=b'123456')
+                    print(f'''{root}\\{file}''', "step1", ext)
                 except Exception as e:
-                    print(f'''{root}\\{file}''', '不是压缩文件', e)
+                    print(f'''{root}\\{file}''', 'step2', e)
+                    continue
+                for password in passwordList:
+                    try:
+                        if (ext == '7z' and fileTuple[1] == '.001'):
+                            with multivolumefile.open(fileTuple[0], mode='rb') as target_archive:
+                                with py7zr.SevenZipFile(target_archive, mode='r', password=password) as archieve:
+                                    archieve.extractall(path=f'''{root}'''.replace('archives0', 'archives1'))
+                                    print('解压完成')
+                                    break
+                        if (ext == '7z'):
+                            archieve = py7zr.SevenZipFile(f'''{root}\\{file}''', mode='r', password=password)  # 密码在这里写
+                            archieve.extractall(path=f'''{root}'''.replace('archives0', 'archives1'))
+                            archieve.close()
+                            print('解压完成')
+                            break
+                        if (ext == 'rar'):
+                            archieve = rarfile.RarFile(f'''{root}\\{file}''', mode='r', )
+                            archieve.extractall(path=f'''{root}'''.replace('archives0', 'archives1'), pwd=password)
+                            print('解压完成')
+                            break
+                        if (ext == 'zip'):
+                            archieve = zipfile.ZipFile(f'''{root}\\{file}''', mode='r')
+                            archieve.extractall(path=f'''{root}'''.replace('archives0', 'archives1'),
+                                                pwd=password.encode('utf-8'))
+                            print('解压完成')
+                            break
+                    except Exception as e:
+                        print(f'''{root}\\{file}''', 'step2', e)
+                        continue
 
         for root, dirs, files in os.walk('.\\archives1\\'):
             for file in files:
                 kind = filetype.guess(f'''{root}\\{file}''')
                 fileTuple = os.path.splitext(f'''{root}\\{file}''')
                 try:
-                    ext = kind.extension
+                    ext = kind.extension  # 能被filetype识别到的文件类型
                     print(f'''{root}\\{file}''', ext)
-                    if (ext == '7z' and fileTuple[1] == '.001'):
-                        with multivolumefile.open(fileTuple[0], mode='rb') as target_archive:
-                            with py7zr.SevenZipFile(target_archive, mode='r') as archieve:
-                                archieve.extractall(path=f'''{root}'''.replace('archives1', 'archives2'))
-                    if (ext == '7z'):
-                        archieve = py7zr.SevenZipFile(f'''{root}\\{file}''', mode='r', )
-                        archieve.extractall(path=f'''{root}'''.replace('archives1', 'archives2'))
-                    if (ext == 'rar'):
-                        archieve = rarfile.RarFile(f'''{root}\\{file}''', mode='r', )
-                        archieve.extractall(path=f'''{root}'''.replace('archives1', 'archives2'), pwd='123456')
-                    if (ext == 'zip'):
-                        archieve = zipfile.ZipFile(f'''{root}\\{file}''', mode='r')
-                        archieve.extractall(path=f'''{root}'''.replace('archives1', 'archives2'), pwd=b'123456')
                 except Exception as e:
-                    print(f'''{root}\\{file}''', '不是压缩文件')
+                    print(f'''{root}\\{file}''', 'step2', e)
+                    continue
+                for password in passwordList:
+                    try:
+                        if (ext == '7z' and fileTuple[1] == '.001'):
+                            with multivolumefile.open(fileTuple[0], mode='rb') as target_archive:
+                                with py7zr.SevenZipFile(target_archive, mode='r', password=password) as archieve:
+                                    archieve.extractall(path=f'''{root}'''.replace('archives1', 'archives2'))
+                                    print('解压完成')
+                                    break
+                        if (ext == '7z'):
+                            archieve = py7zr.SevenZipFile(f'''{root}\\{file}''', mode='r', password=password)
+                            archieve.extractall(path=f'''{root}'''.replace('archives1', 'archives2'))
+                            print('解压完成')
+                            break
+                        if (ext == 'rar'):
+                            archieve = rarfile.RarFile(f'''{root}\\{file}''', mode='r', )
+                            archieve.extractall(path=f'''{root}'''.replace('archives1', 'archives2'), pwd=password)
+                            print('解压完成')
+                            break
+                        if (ext == 'zip'):
+                            archieve = zipfile.ZipFile(f'''{root}\\{file}''', mode='r')
+                            archieve.extractall(path=f'''{root}'''.replace('archives1', 'archives2'),
+                                                pwd=password.encode('utf-8'))
+                            print('解压完成')
+                            break
+                    except Exception as e:
+                        print(f'''{root}\\{file}''', 'step2', e)
+                        continue
 
         for root, dirs, files in os.walk('.\\archives2\\'):
             for file in files:
