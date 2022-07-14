@@ -34,7 +34,7 @@ urlpatterns = [
     path("viewsetbook/<int:pk>/", views.BookInfoAPIViewSet.as_view({'get': 'retrieve'})),
     path("genericviewsetbook/", views.BookInfoGenericApiViewSet.as_view({'get': 'list'})),
     path("genericviewsetbook/<int:pk>/", views.BookInfoGenericApiViewSet.as_view({'get': 'retrieve'})),
-    path("genericviewsetbook/<int:pk>/", views.BookInfoGenericApiViewSet.as_view({'get': 'retrieve'})),
+    # path("genericviewsetbook/<int:pk>/", views.BookInfoGenericApiViewSet.as_view({'get': 'retrieve'})),
     # path("img/cover/<int:pk>",views),
     path("genericviewgoodsintentory/", views.GoodsIntentoryListGenericApiViewSet.as_view({'get': 'list'})),
     path("genericviewgoodslist/", views.GoodsListGenericApiViewSet.as_view({'get': 'list'})),

@@ -114,6 +114,10 @@ class BookInfoSingleGenericApiView(RetrieveUpdateDestroyAPIView):
     #     return self.update(request)
 
 
+def getBookPicFileName(obj):
+    return int(os.path.splitext(obj.filename)[0])
+
+
 class BookInfoSingleZip(ViewSet):
 
     def picLength(self, request, pk):
@@ -124,8 +128,9 @@ class BookInfoSingleZip(ViewSet):
         ser = BookInfoSerializer(book)
         # print(ser.data['title'])
         bookTitle = ser.data['title']
-        if os.path.exists(f'''./app01/static/bookZips/{bookTitle}.zip'''):
-            bookZip = zipfile.ZipFile(f'''./app01/static/bookZips/{bookTitle}.zip''', mode="r")
+        bookPath=ser.data['path']
+        if os.path.exists(f'''{bookPath}//{bookTitle}.zip'''):
+            bookZip = zipfile.ZipFile(f'''{bookPath}//{bookTitle}.zip''', mode="r")
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
         # print([item for item in bookZip.infolist() if not item.is_dir()])
@@ -144,16 +149,19 @@ class BookInfoSingleZip(ViewSet):
             return Response(status=status.HTTP_404_NOT_FOUND)
         ser = BookInfoSerializer(book)
         bookTitle = ser.data['title']
+        bookPath=ser.data['path']
         # picHeight=request.query_params['height']
         # picWidth=request.query_params['width']
-        if os.path.exists(f'''./app01/static/bookZips/{bookTitle}[jxl].zip'''):
-            bookZip = zipfile.ZipFile(f'''./app01/static/bookZips/{bookTitle}[jxl].zip''', mode="r")
+        if os.path.exists(f'''{bookPath}//{bookTitle}.zip'''):
+            bookZip = zipfile.ZipFile(f'''{bookPath}//{bookTitle}.zip''', mode="r")
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        # print([item for item in bookZip.infolist() if not item.is_dir()])
-        picList = [item for item in bookZip.infolist() if not item.is_dir()]
-        # return HttpResponse(bookZip.read(picList[page - 1]), content_type='image/jpg')
-        return HttpResponse(bookZip.read(picList[page - 1]), content_type='image/jxl')
+        templist=[item for item in bookZip.infolist() if not item.is_dir()]
+        templist.sort(key=getBookPicFileName)  # 按照数字名称排序
+        print(templist)
+        # picList = [item for item in bookZip.infolist() if not item.is_dir()].sort()
+        # return HttpResponse(bookZip.read(picList[page - 1]), content_type='image/webp')
+        return HttpResponse(bookZip.read(templist[page - 1]), content_type='image/webp')
 
 
 class BookInfoAPIViewSet(ViewSet):

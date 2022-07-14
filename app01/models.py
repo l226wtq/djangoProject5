@@ -8,6 +8,7 @@ class Book(models.Model):
     publishDate = models.DateField(auto_now=False, auto_now_add=False, verbose_name="发行时间", blank=True, null=True)
     rating = models.SmallIntegerField(verbose_name="评分", blank=True, null=True)
     type = models.CharField(max_length=200, verbose_name="种类", blank=True)
+    path = models.CharField(max_length=3000, verbose_name='路径')
 
 
 class GoodsInventory(models.Model):
@@ -64,7 +65,7 @@ class sqlStatementDocument(models.Model):
     sysType = models.CharField(max_length=200, verbose_name="SQL所属系统", choices=sysTypeName.choices,
                                default=sysTypeName.RENSHI)
     type = models.CharField(choices=sqlType.choices, default=sqlType.SEARCH, max_length=10, verbose_name="SQL操作类型")
-    enable = models.BooleanField(verbose_name="启用状态",default=True)
+    enable = models.BooleanField(verbose_name="启用状态", default=True)
     lastestSqlStatment = models.TextField(verbose_name="最新SQL语句", default="")
     lastestSqlExplanation = models.TextField(verbose_name="最新SQL注释说明", default="")
 

@@ -18,20 +18,23 @@ class bookManager:
     conf.read(".\\TEST.ini")
     bookPath = conf.defaults()['bookzipspath']
     resultList = []
+    booksPathDic = {}
 
     def scanDirbooks(self):
         DBtitleList = Book.objects.all().values_list('title', flat=True)
         # for title in DBtitleList:
         #     print(title)
-        for file in os.listdir(self.bookPath):
-
-            filename = os.path.splitext(file)[0]
-            exname = os.path.splitext(file)[1]
-            if exname == ".zip":
-                if filename in DBtitleList:
-                    continue  # 文件重复了
-                self.resultList.append(filename)
-        print(self.resultList)
+        # for file in os.listdir(self.bookPath):
+        for root, dirs, files in os.walk(self.bookPath):
+            for file in files:
+                filename = os.path.splitext(file)[0]
+                exname = os.path.splitext(file)[1]
+                if exname == ".zip":
+                    if filename in DBtitleList:
+                        continue  # 文件重复了
+                    self.resultList.append(filename)
+                    self.booksPathDic[filename] = root
+        print(self.booksPathDic)
 
     # def addtoDB(self):
     #     newBookslist = []
@@ -51,10 +54,10 @@ class bookManager:
         # perviousBooks = Book.objects.all().order_by('-id')  # 为了取最后一条记录的id
         # print(perviousBooks)
         # lastId = perviousBooks[0].id
-        for filename in self.resultList:
+        for filename in self.booksPathDic.keys():
             # newbook = Book.objects.create(title=filename)
             # newbook.save()
-            newBookslist.append(Book(title=filename))
+            newBookslist.append(Book(title=filename, path=self.booksPathDic[filename]))
             # lastId += 1
             # self.generateCover(filename=filename, lastId=lastId)
         bulkCreateResponse = Book.objects.bulk_create(newBookslist)
@@ -64,9 +67,9 @@ class bookManager:
 
     def generateCover(self, filename, lastId):
         thumbnailSize = (400, 600)
-        if os.path.exists(f'''{self.bookPath}\\{filename}.zip'''):
+        if os.path.exists(f'''{self.booksPathDic[filename]}\\{filename}.zip'''):
             # bookZip = zipfile.ZipFile(f'''{self.bookPath}\\{filename}.zip''', mode="r")
-            with zipfile.ZipFile(f'''{self.bookPath}\\{filename}.zip''', mode="r") as bookZip:
+            with zipfile.ZipFile(f'''{self.booksPathDic[filename]}\\{filename}.zip''', mode="r") as bookZip:
                 # coverFile = bookZip.open(bookZip.filelist[0])
                 for name in bookZip.namelist():
                     # print(zipfile.Path(root=bookZip, at=name).is_dir())
@@ -213,10 +216,26 @@ class bookManager:
         # archive.extractall(path=".\\temp")
         # archive.close()
 
+    def convertJpgToJxl(self):
+        for root, dirs, files in os.walk('.\\tojxl\\'):
+            for file in files:
+                kind = filetype.guess(f'''{root}\\{file}''')
+                print(kind)
+                try:
+                    ext = kind.extension  # 能被filetype识别到的文件类型
+                    if (ext == 'jpg'):
+                        subprocess.run(
+                            f'''..\\utils\\cjxl.exe "{root}\\{file}" "{root}\\{os.path.splitext(file)[0]}.jxl"''',
+                            shell=True, stdout=subprocess.PIPE)
+                        os.remove(f'''{root}\\{file}''')
+                except Exception as ex:
+                    print(ex)
+
 
 bm = bookManager()
-# bm.scanDirbooks()
-# bm.addtoDB()
+bm.scanDirbooks()
+bm.addtoDB()
 # bm.generateCover("真·中华小当家 Vol.01",1)
 # bm.jxlTest()
-bm.rarExtractTest()
+# bm.rarExtractTest()
+# bm.convertJpgToJxl()

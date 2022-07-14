@@ -1,7 +1,7 @@
 <template>
-  <!-- <bookMainViewIndex /> -->
+  <bookMainViewIndex />
 
-  <PSImainView />
+  <!-- <PSImainView /> -->
 </template>
 
 <script>
