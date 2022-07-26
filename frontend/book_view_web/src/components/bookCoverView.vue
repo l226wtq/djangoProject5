@@ -50,25 +50,50 @@
                 :disabled="getDisableList(index)"
                 noShadow
             /></el-col>
-            <el-col :span="12"
-              ><el-input
+            <el-col :span="12">
+              <!-- <el-input
                 v-model="item.publishDate"
                 clearable
                 :disabled="getDisableList(index)"
                 noShadow
-            /></el-col>
+            /> -->
+              <el-date-picker
+                class="cover-date-picker"
+                v-model="item.publishDate"
+                type="date"
+                placeholder="选择日期"
+                size="default"
+                value-format="YYYY-MM-DD"
+                :disabled="getDisableList(index)"
+                @change="pickedDate"
+              />
+            </el-col>
           </el-row>
           <el-row>
             <el-col :span="12"
               ><el-rate v-model="item.rating" :disabled="getDisableList(index)"
             /></el-col>
-            <el-col :span="12"
-              ><el-input
+            <el-col :span="12">
+              <!-- <el-input
                 v-model="item.type"
                 clearable
                 :disabled="getDisableList(index)"
                 noShadow
-            /></el-col>
+            /> -->
+              <el-select
+                v-model="item.type"
+                class="m-2"
+                placeholder="选择类型"
+                :disabled="getDisableList(index)"
+              >
+                <el-option
+                  v-for="tp in bookType"
+                  :key="tp"
+                  :label="tp"
+                  :value="tp"
+                />
+              </el-select>
+            </el-col>
           </el-row>
 
           <el-row class="mb-2">
@@ -130,6 +155,7 @@ export default {
       ratingValue: 3,
       editDisable: [],
       uneditedBookItem: "",
+      bookType: ["连载漫画", "完结漫画"],
     };
   },
   emits: [
@@ -197,6 +223,7 @@ export default {
       console.log("clickEditButton", item);
       this.editDisable[index] = false;
       this.uneditedBookItem = JSON.stringify(item);
+      console.log(this.uneditedBookItem);
     },
     clickSaveButton(changedItem, index) {
       console.log("clickSaveButton", changedItem);
@@ -218,6 +245,9 @@ export default {
       this.bookObjects.splice(index, 1);
       console.log(this.bookObjects);
       this.deleteSingleBookInfo(item);
+    },
+    pickedDate(e) {
+      console.log("pickedDate", typeof e, e);
     },
   },
 };
@@ -259,5 +289,9 @@ export default {
 }
 .el-input.is-disabled .el-input__inner[noShadow] {
   color: black;
+}
+
+.cover-date-picker {
+  width: 100% !important;
 }
 </style>

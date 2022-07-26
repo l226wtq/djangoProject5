@@ -43,6 +43,7 @@ const homepage = () => import("./components/PSIhomePage.vue")
 // 每个路由都需要映射到一个组件。
 // 我们后面再讨论嵌套路由。
 const routes = [
+    
     { path: '', component: homepage },
     { path: '/homepage', component: homepage },
     { path: '/warehousing', component: PSIwarehousingMainView },
@@ -54,7 +55,6 @@ const routes = [
     { path: '/sqldocument', component: sqlDocumentMainView },
     { path: '/sqldocument/:sysType', component: sqlDocumentMainView },
 ]
-
 // 3. 创建路由实例并传递 `routes` 配置
 // 你可以在这里输入更多的配置，但我们在这里
 // 暂时保持简单

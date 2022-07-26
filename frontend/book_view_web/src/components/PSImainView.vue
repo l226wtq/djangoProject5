@@ -42,50 +42,46 @@
               <!-- </div> -->
             </template>
             <div id="view">
-              <DxSortable
+              <!-- <DxSortable
                 filter=".dx-tab"
                 v-model:data="tabIndexList"
                 item-orientation="horizontal"
                 drag-direction="horizontal"
                 @drag-start="onTabDragStart($event)"
                 @reorder="onTabDrop($event)"
-              >
-                <div>
-                  <DxTabPanel
-                    v-model:dataSource="tabIndexList"
-                    height="calc(100vh - 132px)"
-                    :defer-rendering="false"
-                    :show-nav-buttons="true"
-                    :repaint-changes-only="true"
-                    v-model:selected-index="tabselectedIndex"
-                    v-model:selectedItem="tabSelectedItem"
-                    @titleClick="onTabItemClick"
-                    itemTitleTemplate="titleTem"
-                    item-template="itemTemplate"
+              > -->
+              <div>
+                <DxTabPanel
+                  v-model:dataSource="tabIndexList"
+                  height="calc(100vh - 132px)"
+                  v-model:selected-index="tabselectedIndex"
+                  v-model:selectedItem="tabSelectedItem"
+                  @titleClick="onTabItemClick"
+                  itemTitleTemplate="titleTem"
+                  item-template="itemTemplate"
+                >
+                  <template
+                    #titleTem="{ data: SingletabIndex }"
+                    :class="testclass"
                   >
-                    <template #titleTem="{ data: SingletabIndex }">
-                      <div>
-                        <span>{{ SingletabIndex.title }}</span
-                        ><i
-                          v-show="showCloseButton()"
-                          class="dx-icon dx-icon-close"
-                          @click="closeButtonHandler(SingletabIndex)"
-                        />
-                      </div>
-                    </template>
-                    <template #itemTemplate="{ data: SingletabIndex }">
-                      <div>
-                        {{ SingletabIndex.text }}
-                        <router-view></router-view>
-                        <!-- <PSImainListView /> -->
-                        <!-- <keep-alive>
-                          <component :is="currentTabComponent"></component>
-                        </keep-alive> -->
-                      </div>
-                    </template>
-                  </DxTabPanel>
-                </div>
-              </DxSortable>
+                    <div>
+                      <span>{{ SingletabIndex.title }}</span
+                      ><i
+                        v-show="showCloseButton()"
+                        class="dx-icon dx-icon-close"
+                        @click="closeButtonHandler(SingletabIndex)"
+                      />
+                    </div>
+                  </template>
+                  <template #itemTemplate="{ data: SingletabIndex }">
+                    <div>
+                      {{ SingletabIndex.text }}
+                      <router-view></router-view>
+
+                    </div>
+                  </template>
+                </DxTabPanel>
+              </div>
             </div>
           </DxDrawer>
         </div>
@@ -120,7 +116,7 @@ export default {
   data() {
     return {
       currentTabComponent: "",
-
+      testclass: "dx-tab-selected",
       isDrawerOpen: true,
       buttonOptions: {
         icon: "menu",
@@ -149,18 +145,6 @@ export default {
                   id: "1_1_2",
                   text: "生产入库单",
                   router: "warehousingproduct",
-                },
-                {
-                  id: "1_1_3",
-                  text: "退料入库单",
-                },
-                {
-                  id: "1_1_4",
-                  text: "销售退货单",
-                },
-                {
-                  id: "1_1_5",
-                  text: "其他入库单",
                 },
               ],
             },
@@ -257,12 +241,16 @@ export default {
   mounted() {
     // this.$router.replace({ path: "mainlist" });
   },
+  props: {
+    isMobile: Boolean,
+  },
   methods: {
     onTabItemClick(e) {
-      console.log(e);
-      this.$router.replace({ path: `${e.itemData.router}` });
+      console.log("onTabItemClick", e, "router", e.itemData.router);
+      this.$router.replace({ path: `/${e.itemData.router}` });
     },
     closeButtonHandler(SingletabIndex) {
+      console.log(SingletabIndex);
       let closeTabIndex = this.tabIndexList.indexOf(SingletabIndex);
       console.log("closetabindex", closeTabIndex);
 
@@ -274,14 +262,21 @@ export default {
         closeTabIndex,
         "tabIndexList.length",
         this.tabIndexList.length
-      );
+      ); //删除后的tab保存列表
 
       if (closeTabIndex == this.tabIndexList.length) {
         this.tabselectedIndex = this.tabIndexList.length - 1;
-        console.log("enter");
+        console.log("关闭的最后一个");
+        this.tabSelectedItem = this.tabIndexList[this.tabIndexList.length - 1];
       }
-      this.$router.replace({ path: "/homepage" });
-      console.log(this.tabselectedIndex);
+      this.$router.replace({
+        path: `/${this.tabIndexList[this.tabIndexList.length - 1].router}`,
+      });
+      console.log(
+        "tabselectedIndex",
+        this.tabselectedIndex,
+        this.tabSelectedItem
+      );
     },
 
     selectItem(e) {
@@ -297,6 +292,9 @@ export default {
       this.$router.push(`${"/" + e.itemData.router}`);
       // this.$router.replace({ path: "sqldocument/kaoqing" });
       console.log(this.tabIndexList, "selectIndex", this.tabselectedIndex);
+      this.isMobile=true;
+      console.log('isMobile',this.isMobile);
+
     },
     showCloseButton() {
       return this.tabIndexList.length > 1;

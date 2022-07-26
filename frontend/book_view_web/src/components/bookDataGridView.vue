@@ -92,10 +92,10 @@ export default {
     //       console.log(error);
     //     });
     // },
-    refreshDataGridSource() {
-      console.log("refreshDataGridSource");
-      this.$refs.bookDataGrid.instance.refresh();
-    },
+    // refreshDataGridSource() {
+    //   console.log("refreshDataGridSource");
+    //   this.$refs.bookDataGrid.instance.refresh();
+    // },
     onRowRemoving(e) {
       console.log("bookRowRemoving", e.data.id);
       axios

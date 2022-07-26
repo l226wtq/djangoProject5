@@ -26,7 +26,7 @@
               v-model:CurrentBookLength="CurrentBookLength"
             />
           </DxItem>
-          <DxItem title="panel3">
+          <DxItem title="jxl显示测试">
             <!-- <div>什么都没有</div> -->
             <img src="http://127.0.0.1:8000/static/bookContent/0001.jxl" alt="">
           </DxItem>
@@ -87,9 +87,9 @@ export default {
         });
     },
     clickDataGirdTitle() {
-      console.log("clickDataGirdTitle", this.$refs.bookDataGrid);
+      // console.log("clickDataGirdTitle", this.$refs.bookDataGrid);
       // this.$refs["test"].instance.refresh();
-      this.$refs.bookDataGrid.refreshDataGridSource();
+      // this.$refs.bookDataGrid.refreshDataGridSource();
     },
   },
 };
