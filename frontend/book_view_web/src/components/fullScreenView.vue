@@ -1,8 +1,12 @@
 <template>
   <div class="fullScreenContentor">
     <div>
-      header-{{ page }}-{{ CurrentBookLength }}
+      header - page:{{ page }} - CurrentBookLength:{{ CurrentBookLength }}
       <button :onclick="exitFullScreenView">返回</button>
+      <button :onclick="switchSinglePageEnable">单页显示</button>
+      <button :onclick="switchDualPageEnable">双页显示</button>
+      <button :onclick="fixPageAdd">调整跨页+1</button>
+      <button :onclick="fixPageSub">调整跨页-1</button>
     </div>
     <div class="fullScreenViewBody">
       <div class="img-box">
@@ -44,6 +48,8 @@ export default {
         height: 0,
         width: 0,
       },
+      singlePageEnable: false,
+      page: 1,
     };
   },
   emit: [
@@ -60,8 +66,18 @@ export default {
       this.$emit("update:fullScreenViewMode", false);
     },
     nextPic() {
-      if (this.page < this.CurrentBookLength) {
-        this.page += 2;
+      if (this.singlePageEnable) {
+        if (this.page < this.CurrentBookLength) {
+          this.page += 1;
+        } else {
+          alert("看完咯");
+        }
+      } else {
+        if (this.page + 1 < this.CurrentBookLength) {
+          this.page += 2;
+        } else {
+          alert("看完咯");
+        }
       }
     },
     lastPic() {
@@ -69,11 +85,21 @@ export default {
         this.page -= 2;
       }
     },
-  },
-  data() {
-    return {
-      page: 1,
-    };
+    switchSinglePageEnable() {
+      this.singlePageEnable = true;
+    },
+    switchDualPageEnable() {
+      this.singlePageEnable = false;
+    },
+    fixPageAdd() {
+      if (this.page > 1) {
+        this.page += 1;
+      }
+    },
+    fixPageSub() {
+      
+      this.page -= 1;
+    },
   },
   computed: {
     viewPicUrlLeft() {
@@ -97,7 +123,7 @@ export default {
       return `http://127.0.0.1:8000/genericbook/zip/${this.CurrentBookId}&page=${this.page}`;
     },
     leftPicSwitch() {
-      if (this.page + 1 > this.CurrentBookLength) {
+      if (this.page + 1 > this.CurrentBookLength || this.singlePageEnable) {
         return false;
       } else {
         return true;
