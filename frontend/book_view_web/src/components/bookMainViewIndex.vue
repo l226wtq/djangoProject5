@@ -28,7 +28,7 @@
           </DxItem>
           <DxItem title="jxl显示测试">
             <!-- <div>什么都没有</div> -->
-            <img src="http://127.0.0.1:8000/static/bookContent/0001.jxl" alt="">
+            <img src="http://127.0.0.1:8005/static/bookContent/0001.jxl" alt="">
           </DxItem>
         </DxTabPanel>
       </DxItem>
@@ -75,7 +75,7 @@ export default {
     getAllbooksInfo() {
       console.log("获取所有书籍信息", this.bookObjects);
       axios
-        .get("http://127.0.0.1:8000/book/")
+        .get("http://127.0.0.1:8005/book/")
         .then((response) => {
           // 处理成功情况
           this.bookObjects = response.data;

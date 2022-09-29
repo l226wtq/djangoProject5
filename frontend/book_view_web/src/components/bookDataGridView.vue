@@ -99,7 +99,7 @@ export default {
     onRowRemoving(e) {
       console.log("bookRowRemoving", e.data.id);
       axios
-        .delete(`http://127.0.0.1:8000/book/${e.data.id}/`)
+        .delete(`http://127.0.0.1:8005/book/${e.data.id}/`)
         .then((response) => {
           console.log("已成功发送删除", response);
         })
@@ -115,7 +115,7 @@ export default {
         // console.log(updatedData);
         axios
           .put(
-            `http://127.0.0.1:8000/book/${e.changes[0].key.id}/`,
+            `http://127.0.0.1:8005/book/${e.changes[0].key.id}/`,
             e.changes[0].data
           )
           .then((response) => {

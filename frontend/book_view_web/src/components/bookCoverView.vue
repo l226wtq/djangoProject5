@@ -36,7 +36,7 @@
               @click="openFullScreenView(item.id)"
             /> -->
             <el-image
-              :src="`http://127.0.0.1:8000/static/bookzips/covers/${item.id}.webp`"
+              :src="`http://127.0.0.1:8005/static/bookzips/covers/${item.id}.webp`"
               class="coverPic"
               fit="contain"
               @click="openFullScreenView(item.id)"
@@ -187,7 +187,7 @@ export default {
     },
     getBookZipInfoLength(id) {
       axios
-        .get(`http://127.0.0.1:8000/genericbook/zip/${id}/`)
+        .get(`http://127.0.0.1:8005/genericbook/zip/${id}/`)
         .then((response) => {
           console.log("getBookZipInfoLength", response);
           this.$emit("update:CurrentBookLength", response.data);
@@ -199,7 +199,7 @@ export default {
     putSingleBookInfo(putItem) {
       console.log("putSingleBookInfo", putItem);
       axios
-        .put(`http://127.0.0.1:8000/genericbook/${putItem.id}/`, putItem)
+        .put(`http://127.0.0.1:8005/genericbook/${putItem.id}/`, putItem)
         .then((response) => {
           console.log("已成功发送更新", response);
         })
@@ -210,7 +210,7 @@ export default {
     deleteSingleBookInfo(deleItem) {
       console.log("deleteSingleBookInfo", deleItem);
       axios
-        .delete(`http://127.0.0.1:8000/book/${deleItem.id}/`)
+        .delete(`http://127.0.0.1:8005/book/${deleItem.id}/`)
         .then((response) => {
           console.log("已成功发送删除", response);
         })

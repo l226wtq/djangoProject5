@@ -1,37 +1,47 @@
 <template>
-  <div class="fullScreenContentor">
-    <div>
-      header - page:{{ page }} - CurrentBookLength:{{ CurrentBookLength }}
-      <button :onclick="exitFullScreenView">返回</button>
-      <button :onclick="switchSinglePageEnable">单页显示</button>
-      <button :onclick="switchDualPageEnable">双页显示</button>
-      <button :onclick="fixPageAdd">调整跨页+1</button>
-      <button :onclick="fixPageSub">调整跨页-1</button>
-    </div>
-    <div class="fullScreenViewBody">
+  <el-container id="fullScreenContentor">
+    <el-main>
       <div class="img-box">
-        <img
-          id="LeftPic"
-          ref="LeftPic"
-          :src="viewPicUrlLeft"
-          alt=""
-          :onclick="lastPic"
-          v-if="leftPicSwitch"
+        <el-image
+            id="LeftPic"
+            ref="LeftPic"
+            :src="viewPicUrlLeft"
+            alt=""
+            @click="lastPic"
+            v-if="leftPicSwitch"
         />
-        <img
-          ref="RightPic"
-          :src="viewPicUrlRight"
-          alt=""
-          :onclick="nextPic"
-          v-if="rightPicSwitch"
+        <el-image
+            ref="RightPic"
+            :src="viewPicUrlRight"
+            alt=""
+            @click="nextPic"
+            v-if="rightPicSwitch"
         />
       </div>
-    </div>
-    <!-- <div>
-      footer
-      <button :onclick="nextPic">切换图片</button>
-    </div> -->
-  </div>
+    </el-main>
+    <el-aside width="250px">
+      <el-row>
+        <el-button type="warning" @click="exitFullScreenView">返回</el-button>
+      </el-row>
+      <el-row>
+        <el-button @click="enterFullScreen">进入全屏</el-button>
+      </el-row>
+      <el-row v-show="this.singlePageEnable">当前页数/总页数：{{ page }} / {{ CurrentBookLength }}</el-row>
+      <el-row v-show="!this.singlePageEnable">当前页数/总页数：{{ page + 1 }} - {{ page }} / {{
+          CurrentBookLength
+        }}
+      </el-row>
+      <el-row>
+        <el-button @click="switchSinglePageEnable">单页显示</el-button>
+        <el-button @click="switchDualPageEnable">双页显示</el-button>
+      </el-row>
+      <el-row>
+        <el-button @click="fixPageAdd">调整跨页+1</el-button>
+        <el-button @click="fixPageSub">调整跨页-1</el-button>
+      </el-row>
+    </el-aside>
+
+  </el-container>
 </template>
 
 <script>
@@ -61,6 +71,11 @@ export default {
     // this.left = document.getElementById("LeftPic")?.offsetHeight;
   },
   methods: {
+    enterFullScreen() {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.log(err)
+      })
+    },
     exitFullScreenView() {
       this.page = 1;
       this.$emit("update:fullScreenViewMode", false);
@@ -97,30 +112,30 @@ export default {
       }
     },
     fixPageSub() {
-      
+
       this.page -= 1;
     },
   },
   computed: {
     viewPicUrlLeft() {
       console.log(
-        "Left",
-        this.CurrentBookId,
-        this.CurrentBookLength,
-        this.page + 1
+          "Left",
+          this.CurrentBookId,
+          this.CurrentBookLength,
+          this.page + 1
       );
-      return `http://127.0.0.1:8000/genericbook/zip/${
-        this.CurrentBookId
+      return `http://127.0.0.1:8005/genericbook/zip/${
+          this.CurrentBookId
       }&page=${this.page + 1}`;
     },
     viewPicUrlRight() {
       console.log(
-        "right",
-        this.CurrentBookId,
-        this.CurrentBookLength,
-        this.page
+          "right",
+          this.CurrentBookId,
+          this.CurrentBookLength,
+          this.page
       );
-      return `http://127.0.0.1:8000/genericbook/zip/${this.CurrentBookId}&page=${this.page}`;
+      return `http://127.0.0.1:8005/genericbook/zip/${this.CurrentBookId}&page=${this.page}`;
     },
     leftPicSwitch() {
       if (this.page + 1 > this.CurrentBookLength || this.singlePageEnable) {
@@ -141,26 +156,33 @@ export default {
 </script>
 
 <style>
-.fullScreenContentor {
-  display: flex;
-  flex-direction: column;
-  align-content: center;
-  justify-content: center;
-  height: 98vh;
-  border-style: solid;
-  border-width: 2px;
+body {
+  margin: 0;
+}
+
+#fullScreenContentor {
   background-color: gray;
+  height: 100vh;
+}
+
+#fullScreenContentor .el-main {
+  padding: 0;
+  height: 100%;
 }
 
 .img-box {
   display: flex;
   align-items: center;
   justify-content: center;
+  height: 100%;
+}
+
+#fullScreenContentor .el-image {
+  height: 100%;
 }
 
 img {
-  max-height: calc(98vh - 44px);
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
+  /*max-height: calc(98vh - 44px);*/
+  image-rendering: high-quality;
 }
 </style>
