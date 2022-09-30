@@ -1,6 +1,7 @@
 import os, shutil
-import zipfile, zipp, py7zr, multivolumefile
-from unrar import rarfile
+import zipfile, zipp
+# import , py7zr, multivolumefile
+# from unrar import rarfile
 import filetype
 from PIL import Image
 import configparser
@@ -17,22 +18,21 @@ class bookManager:
     conf = configparser.ConfigParser()
     conf.read(".\\TEST.ini")
     bookPath = conf.defaults()['bookzipspath']
-    resultList = []
     booksPathDic = {}
 
     def scanDirbooks(self):
         DBtitleList = Book.objects.all().values_list('title', flat=True)
-        # for title in DBtitleList:
-        #     print(title)
-        # for file in os.listdir(self.bookPath):
         for root, dirs, files in os.walk(self.bookPath):
             for file in files:
                 filename = os.path.splitext(file)[0]
                 exname = os.path.splitext(file)[1]
                 if exname == ".zip":
+                    # 按照文件名称来判断是否一再数据库里
                     if filename in DBtitleList:
-                        continue  # 文件重复了
-                    self.resultList.append(filename)
+                        obj = Book.objects.get(title=filename)
+                        if (obj.path != root):
+                            obj.path = root
+                            obj.save()
                     self.booksPathDic[filename] = root
         print(self.booksPathDic)
 
