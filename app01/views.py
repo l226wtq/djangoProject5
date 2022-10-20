@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet, ModelViewSet, GenericViewSet, ReadOnlyModelViewSet
 from rest_framework.mixins import ListModelMixin, CreateModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
 
 from BaseOrm import DictToModel
 from app01.models import Book, GoodsInventory, GoodsList, BoundJournalList, sqlStatementDocument, sqlSingleStatmentList
@@ -32,22 +33,33 @@ class BookInfoView(ModelViewSet):  # 包含全部的Mixin类
     serializer_class = BookInfoSerializer
 
 
-class BookInfoApiView(APIView):
-    # 列表视图
-    def get(self, request):
-        books = Book.objects.all()
-        ser = BookInfoSerializer(instance=books, many=True)
-        return Response(ser.data)
+class bookPageNumberPagination(PageNumberPagination):
+    page_size = 30
+    page_query_param = 'page'
 
-    def post(self, request):
-        # 获取前端发过来的数据并且反序列化
-        ser = BookInfoSerializer(data=request.data)
-        # 验证数据并抛出异常
-        ser.is_valid(raise_exception=True)
-        # 序列化器save方法执行create方法
-        ser.save()
-        # 返回新增的数据
-        return Response(ser.data, status=status.HTTP_201_CREATED)
+
+class BookInfoApiView(GenericAPIView, ListModelMixin):
+    queryset = Book.objects.all()
+    serializer_class  = BookInfoSerializer
+    pagination_class = bookPageNumberPagination
+
+    def get(self, request):
+        return self.list(request)
+    # 列表视图
+    # def get(self, request):
+    #     books = Book.objects.all()
+    #     ser = BookInfoSerializer(instance=books, many=True)
+    #     return Response(ser.data)
+    #
+    # def post(self, request):
+    #     # 获取前端发过来的数据并且反序列化
+    #     ser = BookInfoSerializer(data=request.data)
+    #     # 验证数据并抛出异常
+    #     ser.is_valid(raise_exception=True)
+    #     # 序列化器save方法执行create方法
+    #     ser.save()
+    #     # 返回新增的数据
+    #     return Response(ser.data, status=status.HTTP_201_CREATED)
 
 
 class BookInfoSingleApiView(APIView):
@@ -128,7 +140,7 @@ class BookInfoSingleZip(ViewSet):
         ser = BookInfoSerializer(book)
         # print(ser.data['title'])
         bookTitle = ser.data['title']
-        bookPath=ser.data['path']
+        bookPath = ser.data['path']
         if os.path.exists(f'''{bookPath}//{bookTitle}.zip'''):
             bookZip = zipfile.ZipFile(f'''{bookPath}//{bookTitle}.zip''', mode="r")
         else:
@@ -149,14 +161,14 @@ class BookInfoSingleZip(ViewSet):
             return Response(status=status.HTTP_404_NOT_FOUND)
         ser = BookInfoSerializer(book)
         bookTitle = ser.data['title']
-        bookPath=ser.data['path']
+        bookPath = ser.data['path']
         # picHeight=request.query_params['height']
         # picWidth=request.query_params['width']
         if os.path.exists(f'''{bookPath}//{bookTitle}.zip'''):
             bookZip = zipfile.ZipFile(f'''{bookPath}//{bookTitle}.zip''', mode="r")
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        templist=[item for item in bookZip.infolist() if not item.is_dir()]
+        templist = [item for item in bookZip.infolist() if not item.is_dir()]
         templist.sort(key=getBookPicFileName)  # 按照数字名称排序
         print(templist)
         # picList = [item for item in bookZip.infolist() if not item.is_dir()].sort()
