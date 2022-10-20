@@ -6,6 +6,10 @@ import filetype
 from PIL import Image
 import configparser
 import subprocess
+import itertools
+import time
+
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "djangoProject5.settings")
 import django
@@ -217,25 +221,306 @@ class bookManager:
         # archive.close()
 
     def convertJpgToJxl(self):
-        for root, dirs, files in os.walk('.\\tojxl\\'):
+        picList = []
+        for root, dirs, files in os.walk(
+                r'C:\Users\lyy\workwork\djangoProject5\app01\static\jxl\真·中华小当家 Vol.12'):
             for file in files:
                 kind = filetype.guess(f'''{root}\\{file}''')
-                print(kind)
+                if (kind == None):
+                    continue
                 try:
                     ext = kind.extension  # 能被filetype识别到的文件类型
                     if (ext == 'jpg'):
-                        subprocess.run(
-                            f'''..\\utils\\cjxl.exe "{root}\\{file}" "{root}\\{os.path.splitext(file)[0]}.jxl"''',
-                            shell=True, stdout=subprocess.PIPE)
-                        os.remove(f'''{root}\\{file}''')
+                        # subprocess.run(
+                        #     f'''..\\utils\\cjxl.exe "{root}\\{file}" "{root}\\{os.path.splitext(file)[0]}.jxl"''',
+                        #     shell=True, stdout=subprocess.PIPE)
+                        # subprocess.run(
+                        #     ['..\\utils\\cjxl.exe', f"{root}\\{file}", f"{root}\\{os.path.splitext(file)[0]}.jxl",
+                        #      "--lossless_jpeg=1"])
+                        picList.append(f'{root}\\{file}')
+                    if (ext == 'png'):
+                        # subprocess.run(
+                        #     ['..\\utils\\cjxl.exe', f"{root}\\{file}", f"{root}\\{os.path.splitext(file)[0]}.jxl",
+                        #      "--lossless_jpeg=0", '--quality=90'])
+                        picList.append(f'{root}\\{file}')
+                        # os.remove(f'''{root}\\{file}''')
                 except Exception as ex:
                     print(ex)
 
+        self.multiNum = 4
+        task_list = []
+        for index in range(len(picList) // self.multiNum + 1):
+            print(f'======================{index + 1}/{len(picList) // self.multiNum + 1}============================')
+            for path2 in picList[index * self.multiNum:index * self.multiNum + self.multiNum]:
+                toJxl_task = subprocess.Popen(['..\\utils\\cjxl.exe', f"{path2}", f"{path2}.jxl",
+                                               "--lossless_jpeg=0", '--quality=90'])
+                task_list.append(toJxl_task)
+            for task, index in zip(task_list, range(len(task_list))):
+                while task.poll() is None:
+                    print(f'task{index} is running')
+                    time.sleep(0.5)
+                print(f'task{index} is finished')
+            task_list.clear()
 
-bm = bookManager()
-bm.scanDirbooks()
-bm.addtoDB()
-# bm.generateCover("真·中华小当家 Vol.01",1)
-# bm.jxlTest()
-# bm.rarExtractTest()
+
+# #
+# bm = bookManager()
+# # bm.scanDirbooks()
+# # bm.addtoDB()
+# # bm.generateCover("真·中华小当家 Vol.01",1)
+# # bm.jxlTest()
+# # bm.rarExtractTest()
 # bm.convertJpgToJxl()
+
+import sys
+from threading import Thread
+from PyQt5.QtCore import QTimer, pyqtSignal, QObject
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, \
+    QTextBrowser, QProgressBar
+
+
+# 信号库
+class SignalStore(QObject):
+    # 定义一种信号
+    progress_update = pyqtSignal(int)
+    # 还可以定义其他作用的信号
+
+
+# 实例化
+so = SignalStore()
+
+
+class Demo(QWidget):  # 1
+    def __init__(self):
+        super(Demo, self).__init__()
+        self.timer = QTimer(self)
+        # self.timer.timeout.connect(self.update_func)
+
+        so.progress_update.connect(self.setProgress)
+
+        self.button1 = QPushButton('开始', self)
+        self.button1.clicked.connect(self.handleCalc)
+        self.button2 = QPushButton('结束', self)
+        self.textBrower_logs = QTextBrowser(self)
+        self.progressBar_all = QProgressBar(self)
+
+        self.bm = bookManager()
+
+        self.picList = []
+        for root, dirs, files in os.walk(
+                r'C:\Users\lyy\workwork\djangoProject5\app01\static\jxl\真·中华小当家 Vol.12'):
+            for file in files:
+                kind = filetype.guess(f'''{root}\\{file}''')
+                if (kind == None):
+                    continue
+                try:
+                    ext = kind.extension  # 能被filetype识别到的文件类型
+                    if (ext == 'jpg'):
+                        self.picList.append(f'{root}\\{file}')
+                    if (ext == 'png'):
+                        self.picList.append(f'{root}\\{file}')
+                except Exception as ex:
+                    print(ex)
+
+        self.multiNum = 4
+        self.textBrower_logs.setText('\n'.join(self.picList))
+        self.progressBar_all.setRange(0, len(self.picList))
+        self.progressBar_all.setValue(0)
+
+        # self.filename_label = QLabel('文件名', self)
+        # self.filename_editor = QLineEdit(self)
+        # self.path_label = QLabel('路径', self)
+        # self.path_editor = QLineEdit(self)
+
+        # self.h_layout1 = QHBoxLayout()
+        # self.h_layout1.addWidget(self.filename_label)
+        # self.h_layout1.addWidget(self.filename_editor)
+        # self.h_layout2 = QHBoxLayout()
+        # self.h_layout2.addWidget(self.path_label)
+        # self.h_layout2.addWidget(self.path_editor)
+        self.layout_init()
+
+    def layout_init(self):
+        self.h_layout3 = QHBoxLayout()
+        self.h_layout3.addWidget(self.button1)
+        self.h_layout3.addWidget(self.button2)
+
+        self.v_layout = QVBoxLayout()
+        self.v_layout.addLayout(self.h_layout3)
+        self.v_layout.addWidget(self.textBrower_logs)
+        self.v_layout.addWidget(self.progressBar_all)
+
+        self.setLayout(self.v_layout)
+
+    # def show_text_func(self):
+    #
+    # # bm = bookManager()
+    # # self.textBrower_logs.setText('开始了')
+    # # bm.convertJpgToJxl()
+
+    def start_stop_func(self):
+        if self.button1.text() == '开始':
+            self.button1.setText('结束')
+            self.timer.start(50)
+            # self.bm.convertJpgToJxl()
+
+    # def update_func(self):
+    #     self.step += 1
+    #     self.progressBar_all.setValue(self.step)
+    #
+    #     if self.step >= 100:
+    #         self.button1.setText('结束')
+    #         self.timer.stop()
+    #         self.step = 0
+    def handleCalc(self):
+        def pbar_change():
+            task_list = []
+            for index1 in range(len(self.picList) // self.multiNum + 1):
+                print(
+                    f'======================{index1 + 1}/{len(self.picList) // self.multiNum + 1}============================')
+                for path2 in self.picList[index1 * self.multiNum:index1 * self.multiNum + self.multiNum]:
+                    toJxl_task = subprocess.Popen(['..\\utils\\cjxl.exe', f"{path2}", f"{path2}.jxl",
+                                                   "--lossless_jpeg=1"])
+                    task_list.append(toJxl_task)
+                for task, index2 in zip(task_list, range(len(task_list))):
+                    while task.poll() is None:
+                        print(f'task{index2} is running')
+                        time.sleep(0.5)
+                    print(f'task{index2} is finished')
+                task_list.clear()
+                so.progress_update.emit(index1 + 1)
+
+        worker = Thread(target=pbar_change)
+        worker.start()
+
+    def setProgress(self, value):
+        self.progressBar_all.setValue(value)
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    demo = Demo()  # 6
+
+    demo.show()  # 7
+    sys.exit(app.exec_())
+
+# import sys
+# from PyQt5.QtWidgets import QWidget, QApplication, QTreeView, QFileSystemModel, QHBoxLayout
+# from PyQt5 import QtCore
+# from PyQt5.Qt import *
+#
+#
+# class MainWidget(QWidget):
+#     def __init__(self, parent=None):
+#         super(MainWidget, self).__init__(parent)
+#
+#         # 获取系统所有文件
+#         self.model01 = QFileSystemModel()
+#         # 进行筛选只显示文件夹，不显示文件和特色文件
+#         self.model01.setFilter(QtCore.QDir.Dirs | QtCore.QDir.NoDotAndDotDot)
+#         self.model01.setRootPath('')
+#
+#         # 定义创建左边窗口
+#         self.treeView1 = QTreeView(self)
+#         self.treeView1.setModel(self.model01)
+#         for col in range(1, 4):
+#             self.treeView1.setColumnHidden(col, True)
+#         self.treeView1.doubleClicked.connect(self.initUI)
+#
+#         # 定义创建右边窗口
+#         self.model02 = QStandardItemModel()
+#         self.treeView2 = QTreeView(self)
+#         self.treeView2.setModel(self.model02)
+#
+#         # 将创建的窗口进行添加
+#         self.layout = QHBoxLayout()
+#         self.layout.addWidget(self.treeView1)
+#         self.layout.addWidget(self.treeView2)
+#         self.setLayout(self.layout)
+#
+#     def initUI(self, Qmodelidx):
+#         # 每次点击清空右边窗口数据
+#         self.model02.clear()
+#         # 定义一个数组存储路径下的所有文件
+#         PathData = []
+#         # 获取双击后的指定路径
+#         filePath = self.model01.filePath(Qmodelidx)
+#         # List窗口文件赋值
+#         PathDataName = self.model02.invisibleRootItem()
+#         # 拿到文件夹下的所有文件
+#         PathDataSet = os.listdir(filePath)
+#         # 进行将拿到的数据进行排序
+#         PathDataSet.sort()
+#         # 遍历判断拿到的文件是文件夹还是文件，Flase为文件，True为文件夹
+#         for Data in range(len(PathDataSet)):
+#             if os.path.isdir(filePath + '\\' + PathDataSet[Data]) == False:
+#                 PathData.append(PathDataSet[Data])
+#             elif os.path.isdir(filePath + '\\' + PathDataSet[Data]) == True:
+#                 print('2')
+#         # 将拿到的所有文件放到数组中进行右边窗口赋值。
+#         for got in range(len(PathData)):
+#             gosData = QStandardItem(PathData[got])
+#             PathDataName.setChild(got, gosData)
+#
+# app = QApplication(sys.argv)
+# widget = MainWidget()
+# # widget.resize(640, 480)
+# widget.setWindowTitle("Hello, PyQt5!")
+# widget.show()
+# sys.exit(app.exec())
+# import sys
+# # PyQt5中使用的基本控件都在PyQt5.QtWidgets模块中
+# from PyQt5.QtWidgets import QApplication, QMainWindow
+# # 导入designer工具生成的login模块
+#
+# from PyQt5 import QtCore, QtGui, QtWidgets
+#
+#
+# class Ui_Dialog(object):
+#     def setupUi(self, Dialog):
+#         Dialog.setObjectName("Dialog")
+#         Dialog.resize(800, 800)
+#         self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
+#         self.buttonBox.setGeometry(QtCore.QRect(420, 740, 341, 32))
+#         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+#         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
+#         self.buttonBox.setObjectName("buttonBox")
+#         self.frame = QtWidgets.QFrame(Dialog)
+#         self.frame.setGeometry(QtCore.QRect(60, 40, 521, 481))
+#         self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+#         self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
+#         self.frame.setObjectName("frame")
+#         self.progressBar = QtWidgets.QProgressBar(self.frame)
+#         self.progressBar.setGeometry(QtCore.QRect(50, 440, 421, 23))
+#         self.progressBar.setProperty("value", 24)
+#         self.progressBar.setObjectName("progressBar")
+#         self.pushButton = QtWidgets.QPushButton(self.frame)
+#         self.pushButton.setGeometry(QtCore.QRect(40, 190, 111, 41))
+#         self.pushButton.setObjectName("pushButton")
+#
+#         self.retranslateUi(Dialog)
+#         # self.buttonBox.accepted.connect(Dialog.accept)  # type: ignore
+#         # self.buttonBox.rejected.connect(Dialog.reject)  # type: ignore
+#         QtCore.QMetaObject.connectSlotsByName(Dialog)
+#
+#     def retranslateUi(self, Dialog):
+#         _translate = QtCore.QCoreApplication.translate
+#         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+#         self.pushButton.setText(_translate("Dialog", "PushButton"))
+#
+#
+# class MyMainForm(QMainWindow, Ui_Dialog):
+#     def __init__(self, parent=None):
+#         super(MyMainForm, self).__init__(parent)
+#         self.setupUi(self)
+#
+#
+# if __name__ == "__main__":
+#     # 固定的，PyQt5程序都需要QApplication对象。sys.argv是命令行参数列表，确保程序可以双击运行
+#     app = QApplication(sys.argv)
+#     # 初始化
+#     myWin = MyMainForm()
+#     # 将窗口控件显示在屏幕上
+#     myWin.show()
+#     # 程序运行，sys.exit方法确保程序完整退出。
+#     sys.exit(app.exec_())

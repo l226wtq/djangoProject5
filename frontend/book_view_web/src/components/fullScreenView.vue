@@ -39,12 +39,40 @@
         <el-button @click="fixPageAdd">调整跨页+1</el-button>
         <el-button @click="fixPageSub">调整跨页-1</el-button>
       </el-row>
+      <hr>
+      <el-row>
+        <el-col :span="4"><span>作者</span></el-col>
+        <el-col :span="20">
+          <el-input></el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4"><span>日期</span></el-col>
+        <el-col :span="20">
+          <el-date-picker></el-date-picker>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4"><span>评分</span></el-col>
+        <el-col :span="20">
+          <el-rate size="large"></el-rate>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4"><span>类型</span></el-col>
+        <el-col :span="20">
+          <el-select></el-select>
+        </el-col>
+      </el-row>
     </el-aside>
 
   </el-container>
 </template>
 
 <script>
+const pica = require('pica')();
+
+
 export default {
   name: "fullScreenView",
   props: {
@@ -71,6 +99,7 @@ export default {
     // this.left = document.getElementById("LeftPic")?.offsetHeight;
   },
   methods: {
+
     enterFullScreen() {
       document.documentElement.requestFullscreen().catch((err) => {
         console.log(err)
