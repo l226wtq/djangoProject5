@@ -274,7 +274,7 @@ class bookManager:
 
 import sys
 from threading import Thread
-from PyQt5.QtCore import QTimer, pyqtSignal, QObject
+from PyQt5.QtCore import QTimer, pyqtSignal, QObject, QThread
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, \
     QTextBrowser, QProgressBar
 
@@ -291,54 +291,62 @@ so = SignalStore()
 
 
 class Demo(QWidget):  # 1
-    def __init__(self):
+    def __init__(self, multiNum):
         super(Demo, self).__init__()
-        self.timer = QTimer(self)
-        # self.timer.timeout.connect(self.update_func)
-
-        so.progress_update.connect(self.setProgress)
+        self.thread_1 = None
 
         self.button1 = QPushButton('开始', self)
-        self.button1.clicked.connect(self.handleCalc)
+        self.button1.clicked.connect(self.run_py)
         self.button2 = QPushButton('结束', self)
         self.textBrower_logs = QTextBrowser(self)
+        self.setAcceptDrops(True)
         self.progressBar_all = QProgressBar(self)
 
         self.bm = bookManager()
+        self.pathList = [r'C:\Users\lyy\workwork\djangoProject5\app01\static\jxl\真·中华小当家 Vol.12']
+        self.fileCount = 0
+        self.picDict = self.scanPics()
+        self.multiNum = multiNum
 
-        self.picList = []
-        for root, dirs, files in os.walk(
-                r'C:\Users\lyy\workwork\djangoProject5\app01\static\jxl\真·中华小当家 Vol.12'):
-            for file in files:
-                kind = filetype.guess(f'''{root}\\{file}''')
-                if (kind == None):
-                    continue
-                try:
-                    ext = kind.extension  # 能被filetype识别到的文件类型
-                    if (ext == 'jpg'):
-                        self.picList.append(f'{root}\\{file}')
-                    if (ext == 'png'):
-                        self.picList.append(f'{root}\\{file}')
-                except Exception as ex:
-                    print(ex)
+        for list in self.picDict.values():
+            self.fileCount += len(list)
 
-        self.multiNum = 4
-        self.textBrower_logs.setText('\n'.join(self.picList))
-        self.progressBar_all.setRange(0, len(self.picList))
+        # self.textBrower_logs.setText('\n'.join(self.picList))
+        self.progressBar_all.setRange(0, self.fileCount // self.multiNum)
         self.progressBar_all.setValue(0)
 
-        # self.filename_label = QLabel('文件名', self)
-        # self.filename_editor = QLineEdit(self)
-        # self.path_label = QLabel('路径', self)
-        # self.path_editor = QLineEdit(self)
-
-        # self.h_layout1 = QHBoxLayout()
-        # self.h_layout1.addWidget(self.filename_label)
-        # self.h_layout1.addWidget(self.filename_editor)
-        # self.h_layout2 = QHBoxLayout()
-        # self.h_layout2.addWidget(self.path_label)
-        # self.h_layout2.addWidget(self.path_editor)
         self.layout_init()
+        self.resize(700, 700)
+
+    def dragEnterEvent(self, QDragEnterEvent):  # 3
+        print('Drag Enter')
+
+    def dragMoveEvent(self, QDragMoveEvent):  # 4
+        print('Drag Move')
+
+    def dragLeaveEvent(self, QDragLeaveEvent):  # 5
+        print('Drag Leave')
+
+    def dropEvent(self, QDropEvent):  # 6
+        print('Drag Drop')
+
+    def scanPics(self):
+        tempDict = {'jpg': [], 'png': []}
+        for rootPath in self.pathList:
+            for root, dirs, files in os.walk(rootPath):
+                for file in files:
+                    kind = filetype.guess(f'''{root}\\{file}''')
+                    if (kind == None):
+                        continue
+                    try:
+                        ext = kind.extension  # 能被filetype识别到的文件类型
+                        if (ext == 'jpg'):
+                            tempDict['jpg'].append(f'{root}\\{file}')
+                        if (ext == 'png'):
+                            tempDict['png'].append(f'{root}\\{file}')
+                    except Exception as ex:
+                        print(ex)
+        return tempDict
 
     def layout_init(self):
         self.h_layout3 = QHBoxLayout()
@@ -352,35 +360,52 @@ class Demo(QWidget):  # 1
 
         self.setLayout(self.v_layout)
 
-    # def show_text_func(self):
-    #
-    # # bm = bookManager()
-    # # self.textBrower_logs.setText('开始了')
-    # # bm.convertJpgToJxl()
+    def run_py(self):
+        self.progressBar_all.setValue(0)
+        self.thread_1 = Runthread(picsDic=self.picDict, multiNum=self.multiNum)
+        self.thread_1.progressBarValue.connect(self.callback)
+        self.thread_1.start()
 
-    def start_stop_func(self):
-        if self.button1.text() == '开始':
-            self.button1.setText('结束')
-            self.timer.start(50)
-            # self.bm.convertJpgToJxl()
+    # 回传进度条参数
+    def callback(self, i):
+        self.progressBar_all.setValue(i)
 
-    # def update_func(self):
-    #     self.step += 1
-    #     self.progressBar_all.setValue(self.step)
-    #
-    #     if self.step >= 100:
-    #         self.button1.setText('结束')
-    #         self.timer.stop()
-    #         self.step = 0
-    def handleCalc(self):
-        def pbar_change():
-            task_list = []
-            for index1 in range(len(self.picList) // self.multiNum + 1):
-                print(
-                    f'======================{index1 + 1}/{len(self.picList) // self.multiNum + 1}============================')
-                for path2 in self.picList[index1 * self.multiNum:index1 * self.multiNum + self.multiNum]:
+
+class Runthread(QThread):
+    progressBarValue = pyqtSignal(int)  # 更新进度条
+    signal_done = pyqtSignal(int)  # 是否结束信号
+
+    def __init__(self, picsDic, multiNum):
+        super(Runthread, self).__init__()
+        self.picsDic = picsDic
+        self.multiNum = multiNum
+        self.jpgLen = len(self.picsDic['jpg'])
+        self.pngLen = len(self.picsDic['png'])
+
+    def run(self):
+        task_list = []
+
+        # 先处理jpg2jxl
+        for index1 in range(self.jpgLen // self.multiNum + 1):
+            print('jpg', index1, self.jpgLen // self.multiNum + 1)
+            for path2 in self.picsDic['jpg'][index1 * self.multiNum:index1 * self.multiNum + self.multiNum]:
+                toJxl_task = subprocess.Popen(['..\\utils\\cjxl.exe', f"{path2}", f"{path2}.jxl",
+                                               "--lossless_jpeg=1"])
+                task_list.append(toJxl_task)
+            for task, index2 in zip(task_list, range(len(task_list))):
+                while task.poll() is None:
+                    print(f'task{index2} is running')
+                    time.sleep(0.5)
+                print(f'task{index2} is finished')
+            task_list.clear()
+            self.progressBarValue.emit(index1)  # 发送进度条的值信号
+
+            # 再处理png2jxl
+            for index1 in range(self.pngLen // self.multiNum + 1):
+                print('png', index1, self.pngLen // self.multiNum + 1)
+                for path2 in self.picsDic['jpg'][index1 * self.multiNum:index1 * self.multiNum + self.multiNum]:
                     toJxl_task = subprocess.Popen(['..\\utils\\cjxl.exe', f"{path2}", f"{path2}.jxl",
-                                                   "--lossless_jpeg=1"])
+                                                   "--quality=90"])
                     task_list.append(toJxl_task)
                 for task, index2 in zip(task_list, range(len(task_list))):
                     while task.poll() is None:
@@ -388,18 +413,12 @@ class Demo(QWidget):  # 1
                         time.sleep(0.5)
                     print(f'task{index2} is finished')
                 task_list.clear()
-                so.progress_update.emit(index1 + 1)
-
-        worker = Thread(target=pbar_change)
-        worker.start()
-
-    def setProgress(self, value):
-        self.progressBar_all.setValue(value)
+            self.progressBarValue.emit(index1 + self.jpgLen)  # 发送进度条的值信号
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    demo = Demo()  # 6
+    demo = Demo(multiNum=4)
 
     demo.show()  # 7
     sys.exit(app.exec_())
