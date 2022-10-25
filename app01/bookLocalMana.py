@@ -20,7 +20,7 @@ from app01.models import Book
 
 class bookManager:
     conf = configparser.ConfigParser()
-    conf.read(".\\TEST.ini")
+    conf.read(".\\TEST.ini", encoding='utf-8')
     bookPath = conf.defaults()['bookzipspath']
     booksPathDic = {}
 
@@ -273,7 +273,6 @@ class bookManager:
 # bm.convertJpgToJxl()
 
 import sys
-from threading import Thread
 from PyQt5.QtCore import QTimer, pyqtSignal, QObject, QThread
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, \
     QTextBrowser, QProgressBar
@@ -290,6 +289,60 @@ class SignalStore(QObject):
 so = SignalStore()
 
 
+class path_textBrower(QTextBrowser):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setAcceptDrops(True)
+        self.urls_string_files = []
+        self.urls_string_dirs = []
+
+    def dragEnterEvent(self, e):
+
+        if e.mimeData().hasUrls():
+            # print(e.mimeData())
+            e.accept()
+        else:
+            e.ignore()
+
+    def dragMoveEvent(self, e):
+        pass
+
+    def dropEvent(self, e):
+        urls = [path for path in e.mimeData().urls()]
+        achieve_exname = ('zip', 'rar', '7z')
+        urls_string_files = {}
+        urls_string_dirs = []
+        for url in urls:
+            if os.path.isdir(url.path()[1:]):
+                urls_string_dirs.append(url.path()[1:])
+            else:
+                file_kind = filetype.guess(url.path()[1:])
+                if file_kind is not None and file_kind.extension in achieve_exname:
+                    for key in achieve_exname:
+                        if file_kind.extension == key:
+                            urls_string_files.setdefault(key, []).append(url.path()[1:])
+
+        # 深度遍历下
+        for url in urls_string_dirs:
+            if os.path.isdir(url):
+                for root, dirs, files in os.walk(url):
+                    for file in files:
+                        file_kind = filetype.guess(f'{root}/{file}')
+                        if file_kind is not None and file_kind.extension in achieve_exname:
+                            for key in achieve_exname:
+                                if file_kind.extension == key:
+                                    urls_string_files.setdefault(key, []).append(f'{root}/{file}')
+
+        if urls_string_files == {}:
+            self.setText('没有发现压缩文件')
+        else:
+            all_file_path = []
+            for list in urls_string_files.values():
+                all_file_path += list
+            self.setText('\n'.join(all_file_path))
+            self.urls_string_files = urls_string_files
+
+
 class Demo(QWidget):  # 1
     def __init__(self, multiNum):
         super(Demo, self).__init__()
@@ -297,9 +350,10 @@ class Demo(QWidget):  # 1
 
         self.button1 = QPushButton('开始', self)
         self.button1.clicked.connect(self.run_py)
-        self.button2 = QPushButton('结束', self)
-        self.textBrower_logs = QTextBrowser(self)
-        self.setAcceptDrops(True)
+        self.button2 = QPushButton('解压', self)
+        self.button2.clicked.connect(self.extract_py)
+        self.textBrower_logs = path_textBrower(self)
+        # self.setAcceptDrops(True)
         self.progressBar_all = QProgressBar(self)
 
         self.bm = bookManager()
@@ -307,6 +361,8 @@ class Demo(QWidget):  # 1
         self.fileCount = 0
         self.picDict = self.scanPics()
         self.multiNum = multiNum
+
+        self.passwordList = ['123456', '1234567890', '12321312', '123456789', '1231241']
 
         for list in self.picDict.values():
             self.fileCount += len(list)
@@ -317,18 +373,6 @@ class Demo(QWidget):  # 1
 
         self.layout_init()
         self.resize(700, 700)
-
-    def dragEnterEvent(self, QDragEnterEvent):  # 3
-        print('Drag Enter')
-
-    def dragMoveEvent(self, QDragMoveEvent):  # 4
-        print('Drag Move')
-
-    def dragLeaveEvent(self, QDragLeaveEvent):  # 5
-        print('Drag Leave')
-
-    def dropEvent(self, QDropEvent):  # 6
-        print('Drag Drop')
 
     def scanPics(self):
         tempDict = {'jpg': [], 'png': []}
@@ -369,6 +413,29 @@ class Demo(QWidget):  # 1
     # 回传进度条参数
     def callback(self, i):
         self.progressBar_all.setValue(i)
+
+    def extract_py(self):
+        print('开始解压')
+        for key, value in self.textBrower_logs.urls_string_files.items():
+            if key == 'zip':
+                for file_path in value:
+                    self.zip_extract(file_path)
+
+    def zip_extract(self, file_path):
+        # archieve = zipfile.ZipFile(file_path, mode='r')
+        if not os.path.exists(os.path.join(os.path.dirname(file_path), 'archives1')):
+            os.mkdir(os.path.join(os.path.dirname(file_path), 'archives1'))
+        # archieve.extractall(path=os.path.join(os.path.dirname(file_path), 'archives1'),
+        #                     pwd='12321312'.encode('utf-8'))
+        # archieve.close()
+        extract_task = subprocess.Popen(
+            [r'C:\Program Files\Bandizip\bz.exe', 'x', '-aoa', file_path,
+             os.path.join(os.path.dirname(file_path), 'archives1')], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE
+        )
+        extract_task.stdin.write(b'123456789')
+        out, err = extract_task.communicate()
+        print(out.decode('gbk'))
 
 
 class Runthread(QThread):
@@ -417,129 +484,9 @@ class Runthread(QThread):
 
 
 if __name__ == '__main__':
+
     app = QApplication(sys.argv)
     demo = Demo(multiNum=4)
 
     demo.show()  # 7
     sys.exit(app.exec_())
-
-# import sys
-# from PyQt5.QtWidgets import QWidget, QApplication, QTreeView, QFileSystemModel, QHBoxLayout
-# from PyQt5 import QtCore
-# from PyQt5.Qt import *
-#
-#
-# class MainWidget(QWidget):
-#     def __init__(self, parent=None):
-#         super(MainWidget, self).__init__(parent)
-#
-#         # 获取系统所有文件
-#         self.model01 = QFileSystemModel()
-#         # 进行筛选只显示文件夹，不显示文件和特色文件
-#         self.model01.setFilter(QtCore.QDir.Dirs | QtCore.QDir.NoDotAndDotDot)
-#         self.model01.setRootPath('')
-#
-#         # 定义创建左边窗口
-#         self.treeView1 = QTreeView(self)
-#         self.treeView1.setModel(self.model01)
-#         for col in range(1, 4):
-#             self.treeView1.setColumnHidden(col, True)
-#         self.treeView1.doubleClicked.connect(self.initUI)
-#
-#         # 定义创建右边窗口
-#         self.model02 = QStandardItemModel()
-#         self.treeView2 = QTreeView(self)
-#         self.treeView2.setModel(self.model02)
-#
-#         # 将创建的窗口进行添加
-#         self.layout = QHBoxLayout()
-#         self.layout.addWidget(self.treeView1)
-#         self.layout.addWidget(self.treeView2)
-#         self.setLayout(self.layout)
-#
-#     def initUI(self, Qmodelidx):
-#         # 每次点击清空右边窗口数据
-#         self.model02.clear()
-#         # 定义一个数组存储路径下的所有文件
-#         PathData = []
-#         # 获取双击后的指定路径
-#         filePath = self.model01.filePath(Qmodelidx)
-#         # List窗口文件赋值
-#         PathDataName = self.model02.invisibleRootItem()
-#         # 拿到文件夹下的所有文件
-#         PathDataSet = os.listdir(filePath)
-#         # 进行将拿到的数据进行排序
-#         PathDataSet.sort()
-#         # 遍历判断拿到的文件是文件夹还是文件，Flase为文件，True为文件夹
-#         for Data in range(len(PathDataSet)):
-#             if os.path.isdir(filePath + '\\' + PathDataSet[Data]) == False:
-#                 PathData.append(PathDataSet[Data])
-#             elif os.path.isdir(filePath + '\\' + PathDataSet[Data]) == True:
-#                 print('2')
-#         # 将拿到的所有文件放到数组中进行右边窗口赋值。
-#         for got in range(len(PathData)):
-#             gosData = QStandardItem(PathData[got])
-#             PathDataName.setChild(got, gosData)
-#
-# app = QApplication(sys.argv)
-# widget = MainWidget()
-# # widget.resize(640, 480)
-# widget.setWindowTitle("Hello, PyQt5!")
-# widget.show()
-# sys.exit(app.exec())
-# import sys
-# # PyQt5中使用的基本控件都在PyQt5.QtWidgets模块中
-# from PyQt5.QtWidgets import QApplication, QMainWindow
-# # 导入designer工具生成的login模块
-#
-# from PyQt5 import QtCore, QtGui, QtWidgets
-#
-#
-# class Ui_Dialog(object):
-#     def setupUi(self, Dialog):
-#         Dialog.setObjectName("Dialog")
-#         Dialog.resize(800, 800)
-#         self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
-#         self.buttonBox.setGeometry(QtCore.QRect(420, 740, 341, 32))
-#         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-#         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
-#         self.buttonBox.setObjectName("buttonBox")
-#         self.frame = QtWidgets.QFrame(Dialog)
-#         self.frame.setGeometry(QtCore.QRect(60, 40, 521, 481))
-#         self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-#         self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
-#         self.frame.setObjectName("frame")
-#         self.progressBar = QtWidgets.QProgressBar(self.frame)
-#         self.progressBar.setGeometry(QtCore.QRect(50, 440, 421, 23))
-#         self.progressBar.setProperty("value", 24)
-#         self.progressBar.setObjectName("progressBar")
-#         self.pushButton = QtWidgets.QPushButton(self.frame)
-#         self.pushButton.setGeometry(QtCore.QRect(40, 190, 111, 41))
-#         self.pushButton.setObjectName("pushButton")
-#
-#         self.retranslateUi(Dialog)
-#         # self.buttonBox.accepted.connect(Dialog.accept)  # type: ignore
-#         # self.buttonBox.rejected.connect(Dialog.reject)  # type: ignore
-#         QtCore.QMetaObject.connectSlotsByName(Dialog)
-#
-#     def retranslateUi(self, Dialog):
-#         _translate = QtCore.QCoreApplication.translate
-#         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-#         self.pushButton.setText(_translate("Dialog", "PushButton"))
-#
-#
-# class MyMainForm(QMainWindow, Ui_Dialog):
-#     def __init__(self, parent=None):
-#         super(MyMainForm, self).__init__(parent)
-#         self.setupUi(self)
-#
-#
-# if __name__ == "__main__":
-#     # 固定的，PyQt5程序都需要QApplication对象。sys.argv是命令行参数列表，确保程序可以双击运行
-#     app = QApplication(sys.argv)
-#     # 初始化
-#     myWin = MyMainForm()
-#     # 将窗口控件显示在屏幕上
-#     myWin.show()
-#     # 程序运行，sys.exit方法确保程序完整退出。
-#     sys.exit(app.exec_())
