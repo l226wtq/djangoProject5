@@ -275,18 +275,7 @@ import subprocess
 import sys
 from PyQt5.QtCore import QTimer, pyqtSignal, QObject, QThread
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, \
-    QTextBrowser, QProgressBar
-
-
-# 信号库
-class SignalStore(QObject):
-    # 定义一种信号
-    progress_update = pyqtSignal(int)
-    # 还可以定义其他作用的信号
-
-
-# 实例化
-so = SignalStore()
+    QTextBrowser, QProgressBar, QTextEdit
 
 
 class path_textBrower(QTextBrowser):
@@ -299,7 +288,6 @@ class path_textBrower(QTextBrowser):
     def dragEnterEvent(self, e):
 
         if e.mimeData().hasUrls():
-            # print(e.mimeData())
             e.accept()
         else:
             e.ignore()
@@ -313,7 +301,7 @@ class path_textBrower(QTextBrowser):
         urls_string_files = []
         urls_string_dirs = []
         for url in urls:
-            if os.path.isdir(url.path()[1:]):
+            if os.path.isdir(url.path()[1:]):  # [1:]去除路径前的/字符
                 urls_string_dirs.append(url.path()[1:])
             else:
                 file_kind = filetype.guess(url.path()[1:])
@@ -325,11 +313,11 @@ class path_textBrower(QTextBrowser):
             if os.path.isdir(url):
                 for root, dirs, files in os.walk(url):
                     for file in files:
-                        file_kind = filetype.guess(f'{root}/{file}')
+                        file_kind = filetype.guess(os.path.join(root, file))
                         if file_kind is not None and file_kind.extension in achieve_exname:
-                            urls_string_files.append(f'{root}/{file}')
+                            urls_string_files.append(os.path.join(root, file))
 
-        if urls_string_files == {}:
+        if urls_string_files == []:
             self.setText('没有发现压缩文件')
         else:
             self.setText('\n'.join(urls_string_files))
@@ -348,7 +336,12 @@ class Demo(QWidget):  # 1
         self.input_textBrower_logs = path_textBrower(self)
         self.output1_textBrower_logs = QTextBrowser(self)
         self.output2_textBrower_logs = QTextBrowser(self)
+        self.password_texteditor_logs = QTextEdit(self)
+        self.password_texteditor_logs.textChanged.connect(self.passwordListChanged)
         self.progressBar_all = QProgressBar(self)
+
+        self.urls_string_files = []
+        self.urls_string_dirs = []
 
         # self.bm = bookManager()
         # self.pathList = [r'C:\Users\lyy\workwork\djangoProject5\app01\static\jxl\真·中华小当家 Vol.12']
@@ -362,9 +355,19 @@ class Demo(QWidget):  # 1
         # self.input_textBrower_logs.setText('\n'.join(self.picList))
         # self.progressBar_all.setRange(0, self.fileCount // self.multiNum)
         # self.progressBar_all.setValue(0)
-
+        self.passwordList = ['123456', '123456789', '1234567890', '12321312', '1231241']
+        self.password_texteditor_logs.setText('\n'.join(self.passwordList))
+        self.password_texteditor_logs.textChanged.connect(self.updatePasswordList)
         self.layout_init()
         self.resize(700, 700)
+
+    def passwordListChanged(self):
+        self.passwordList = list(filter(bool, self.password_texteditor_logs.toPlainText().split('\n')))
+        print("passwordListChanged", self.passwordList)
+
+    def updatePasswordList(self):
+        self.passwordList = self.password_texteditor_logs.toPlainText().split('\n')
+        print()
 
     def scanPics(self):
         tempDict = {'jpg': [], 'png': []}
@@ -393,7 +396,13 @@ class Demo(QWidget):  # 1
         self.v_layout.addLayout(self.h_layout3)
         self.v_layout.addWidget(self.input_textBrower_logs)
         self.v_layout.addWidget(self.output1_textBrower_logs)
-        self.v_layout.addWidget(self.output2_textBrower_logs)
+
+        self.h_layout4 = QHBoxLayout()
+        self.h_layout4.addWidget(self.password_texteditor_logs)
+        self.h_layout4.addWidget(self.output2_textBrower_logs)
+        self.h_layout4.setStretch(1, 3)
+
+        self.v_layout.addLayout(self.h_layout4)
         self.v_layout.addWidget(self.progressBar_all)
 
         self.setLayout(self.v_layout)
@@ -413,7 +422,9 @@ class Demo(QWidget):  # 1
         self.progressBar_all.setValue(0)
         self.thread_1 = bandizip_extract_thread(self.input_textBrower_logs.urls_string_files)
         self.thread_1.progressBarValue.connect(self.callback)
+        self.thread_1.output1_set.connect(self.setOutput1Text)
         self.thread_1.output1_append.connect(self.appendOutput1Text)
+        self.thread_1.output2_append.connect(self.appendOutput2Text)
         self.thread_1.start()
 
     def appendOutput1Text(self, index):
@@ -422,14 +433,23 @@ class Demo(QWidget):  # 1
         self.output1_textBrower_logs.setText('\n'.join(textList1))
         self.input_textBrower_logs.setText('\n'.join(textList2))
 
+    def appendOutput2Text(self, text):
+        self.output2_textBrower_logs.append(text)
+
+    def setOutput1Text(self, text):
+        self.output1_textBrower_logs.setText(text)
+
+    def setOutput2Text(self, text):
+        self.output2_textBrower_logs.setText(text)
+
 
 class bandizip_extract_thread(QThread):
     progressBarValue = pyqtSignal(int)  # 更新进度条
     signal_done = pyqtSignal(int)  # 是否结束信号
 
-    output1_append = pyqtSignal(str)
-    output1_pop = pyqtSignal(str)
+    output1_set = pyqtSignal(str)
     output2_append = pyqtSignal(str)
+    output1_append = pyqtSignal(str)
 
     def __init__(self, urls_string_files):
         super(bandizip_extract_thread, self).__init__()
@@ -437,17 +457,30 @@ class bandizip_extract_thread(QThread):
         self.urls_string_files = urls_string_files
 
     def run(self):
+        archives1 = []
+        archives1DirsSet = set()
         for file_path, index in zip(self.urls_string_files, range(1, len(self.urls_string_files) + 1)):
             self.bandizip_extract(file_path, 'archives1')
             self.progressBarValue.emit(index)
             # new_file_path = os.path.join(os.path.dirname(file_path), 'archives1', os.path.basename(file_path))
             # self.output1_append.emit(new_file_path)
-
-        for root, dirs, files in os.walk(os.path.join(os.path.dirname(self.urls_string_files[0]), 'archives1')):
-            self.progressBarValue.emit(0)
-            for file, index2 in zip(files, range(1, len(files) + 1)):
-                self.bandizip_extract(os.path.join(root, file), 'archives2')
-                self.progressBarValue.emit(index2)
+            archives1DirsSet.add(os.path.join(os.path.dirname(file_path), 'archives1'))
+        # 工序2
+        #  遍历所有archieves1文件夹
+        for extractDir in archives1DirsSet:
+            for root, dirs, files in os.walk(extractDir):
+                for file in files:
+                    file_kind = filetype.guess(os.path.join(root, file))
+                    if file_kind is not None and file_kind.extension in ('rar', 'zip', '7z'):
+                        archives1.append(os.path.join(root, file))
+        self.output1_set.emit('\n'.join(archives1))
+        self.progressBarValue.emit(0)
+        #  再次开始解压
+        for file, index2 in zip(archives1, range(1, len(archives1) + 1)):
+            log = self.bandizip_extract(file, 'archives2')
+            self.output2_append.emit(log)
+            self.progressBarValue.emit(index2)
+        self.output2_append.emit('结束哩')
 
     # for file_path, index in zip(self.urls_string_files, range(1, len(self.urls_string_files) + 1)):
     #     self.bandizip_extract(file_path)
@@ -459,12 +492,13 @@ class bandizip_extract_thread(QThread):
             os.mkdir(os.path.join(os.path.dirname(file_path), archivesName))
         for password in self.passwordList:
             try:
-                subprocess.run(
+                task = subprocess.run(
                     [r'C:\Program Files\Bandizip\bz.exe', 'x', '-aoa', file_path,
                      os.path.join(os.path.dirname(file_path), archivesName)], shell=True, input=password.encode('gbk'),
-                    check=True
+                    check=True, capture_output=True
                 )  # 解压覆盖模式
                 # output = task.stdout.decode('gbk')[92:].split('\r\n')
+                return task.stdout.decode('utf-8')
                 break
             except subprocess.CalledProcessError as err:
                 print(err)
