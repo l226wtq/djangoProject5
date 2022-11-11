@@ -4,7 +4,7 @@ import os, shutil
 # # from unrar import rarfile
 import filetype
 # from PIL import Image
-# import configparser
+import configparser
 import subprocess
 # import itertools
 # import time
@@ -273,17 +273,16 @@ import subprocess
 # bm.convertJpgToJxl()
 
 import sys
-from PyQt5.QtCore import QTimer, pyqtSignal, QObject, QThread
+from PyQt5.QtCore import pyqtSignal, QThread
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, \
     QTextBrowser, QProgressBar, QTextEdit
 
 
 class path_textBrower(QTextBrowser):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self):
+        super(path_textBrower, self).__init__()
         self.setAcceptDrops(True)
         self.urls_string_files = []
-        self.urls_string_dirs = []
 
     def dragEnterEvent(self, e):
 
@@ -295,6 +294,8 @@ class path_textBrower(QTextBrowser):
     def dragMoveEvent(self, e):
         pass
 
+    # 遍历拖入的文件夹里的压缩文件和拖入的压缩文件
+    # 返回给Demo第一次需要解压文件列表
     def dropEvent(self, e):
         urls = [path for path in e.mimeData().urls()]
         achieve_exname = ('zip', 'rar', '7z')
@@ -325,7 +326,7 @@ class path_textBrower(QTextBrowser):
 
 
 class Demo(QWidget):  # 1
-    def __init__(self, multiNum):
+    def __init__(self):
         super(Demo, self).__init__()
         self.thread_1 = None
 
@@ -333,7 +334,7 @@ class Demo(QWidget):  # 1
         self.button1.clicked.connect(self.run_py)
         self.button2 = QPushButton('解压', self)
         self.button2.clicked.connect(self.extract_py)
-        self.input_textBrower_logs = path_textBrower(self)
+        self.input_textBrower_logs = path_textBrower()
         self.output1_textBrower_logs = QTextBrowser(self)
         self.output2_textBrower_logs = QTextBrowser(self)
         self.password_texteditor_logs = QTextEdit(self)
@@ -342,12 +343,18 @@ class Demo(QWidget):  # 1
 
         self.urls_string_files = []
         self.urls_string_dirs = []
+        conf = configparser.ConfigParser()
+        conf.read(".\\TEST.ini", encoding='utf-8')
+        self.passwordList = conf.defaults()['passwords'].split(',')
+        self.password_texteditor_logs.setText('\n'.join(self.passwordList))
+        self.layout_init()
+        self.resize(700, 700)
 
         # self.bm = bookManager()
         # self.pathList = [r'C:\Users\lyy\workwork\djangoProject5\app01\static\jxl\真·中华小当家 Vol.12']
         # self.fileCount = 0
         # self.picDict = self.scanPics()
-        self.multiNum = multiNum
+        # self.multiNum = multiNum
 
         # for list in self.picDict.values():
         #     self.fileCount += len(list)
@@ -355,19 +362,17 @@ class Demo(QWidget):  # 1
         # self.input_textBrower_logs.setText('\n'.join(self.picList))
         # self.progressBar_all.setRange(0, self.fileCount // self.multiNum)
         # self.progressBar_all.setValue(0)
-        self.passwordList = ['123456', '123456789', '1234567890', '12321312', '1231241']
-        self.password_texteditor_logs.setText('\n'.join(self.passwordList))
-        self.password_texteditor_logs.textChanged.connect(self.updatePasswordList)
-        self.layout_init()
-        self.resize(700, 700)
 
     def passwordListChanged(self):
         self.passwordList = list(filter(bool, self.password_texteditor_logs.toPlainText().split('\n')))
-        print("passwordListChanged", self.passwordList)
-
-    def updatePasswordList(self):
-        self.passwordList = self.password_texteditor_logs.toPlainText().split('\n')
-        print()
+        conf = configparser.ConfigParser()
+        conf.read(".\\TEST.ini", encoding='utf-8')
+        if (conf.defaults()['passwords'].split(',') != self.passwordList):
+            conf.set('DEFAULT', 'passwords', ','.join(self.passwordList))
+            conf.write(open(".\\TEST.ini", "w", encoding='utf-8'))
+            print("passwordListChanged", self.passwordList)
+        else:
+            pass
 
     def scanPics(self):
         tempDict = {'jpg': [], 'png': []}
@@ -420,11 +425,12 @@ class Demo(QWidget):  # 1
     def extract_py(self):
         self.progressBar_all.setRange(0, len(self.input_textBrower_logs.urls_string_files))
         self.progressBar_all.setValue(0)
-        self.thread_1 = bandizip_extract_thread(self.input_textBrower_logs.urls_string_files)
+        self.thread_1 = bandizip_extract_thread(self.input_textBrower_logs.urls_string_files, self.passwordList)
         self.thread_1.progressBarValue.connect(self.callback)
         self.thread_1.output1_set.connect(self.setOutput1Text)
         self.thread_1.output1_append.connect(self.appendOutput1Text)
         self.thread_1.output2_append.connect(self.appendOutput2Text)
+        self.output2_textBrower_logs.setText('')
         self.thread_1.start()
 
     def appendOutput1Text(self, index):
@@ -451,9 +457,9 @@ class bandizip_extract_thread(QThread):
     output2_append = pyqtSignal(str)
     output1_append = pyqtSignal(str)
 
-    def __init__(self, urls_string_files):
+    def __init__(self, urls_string_files, passwordList):
         super(bandizip_extract_thread, self).__init__()
-        self.passwordList = ['123456', '123456789', '1234567890', '12321312', '1231241']
+        self.passwordList = passwordList
         self.urls_string_files = urls_string_files
 
     def run(self):
@@ -557,7 +563,7 @@ class Runthread(QThread):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    demo = Demo(multiNum=4)
+    demo = Demo()
 
     demo.show()  # 7
     sys.exit(app.exec_())
