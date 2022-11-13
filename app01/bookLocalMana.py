@@ -275,7 +275,7 @@ import subprocess
 import sys
 from PyQt5.QtCore import pyqtSignal, QThread
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, \
-    QTextBrowser, QProgressBar, QTextEdit
+    QTextBrowser, QProgressBar, QTextEdit, QTabWidget
 
 
 class path_textBrower(QTextBrowser):
@@ -325,11 +325,15 @@ class path_textBrower(QTextBrowser):
             self.urls_string_files = urls_string_files
 
 
-class Demo(QWidget):  # 1
+class Demo(QTabWidget):  # 1
     def __init__(self):
         super(Demo, self).__init__()
         self.thread_1 = None
 
+        self.tab1 = QWidget()
+        self.tab2 = QWidget()
+        self.addTab(self.tab1, '选项一')
+        self.addTab(self.tab2, '选项二')
         self.button1 = QPushButton('开始', self)
         self.button1.clicked.connect(self.run_py)
         self.button2 = QPushButton('解压', self)
@@ -393,6 +397,7 @@ class Demo(QWidget):  # 1
         return tempDict
 
     def layout_init(self):
+
         self.h_layout3 = QHBoxLayout()
         self.h_layout3.addWidget(self.button1)
         self.h_layout3.addWidget(self.button2)
@@ -409,8 +414,10 @@ class Demo(QWidget):  # 1
 
         self.v_layout.addLayout(self.h_layout4)
         self.v_layout.addWidget(self.progressBar_all)
-
-        self.setLayout(self.v_layout)
+        # self.setTabText(1, "个人详细信息")
+        self.tab1.setLayout(self.v_layout)
+        self.tab2.setLayout(self.v_layout)
+        # self.setLayout(self.v_layout)
 
     def run_py(self):
         self.progressBar_all.setValue(0)
