@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'app01.apps.App01Config',
-
+    'comicManager.apps.ComicmanagerConfig'
 ]
 
 MIDDLEWARE = [
