@@ -19,6 +19,7 @@
               <el-input
                   clearable
                   noShadow
+                  :disabled="!editMode[(row_num - 1) * coverColNum + col_num - 1]"
                   v-model="allBooksDataSource[(row_num - 1) * coverColNum + col_num - 1].author"
               />
             </el-col>
@@ -29,6 +30,7 @@
                   placeholder="选择日期"
                   size="default"
                   value-format="YYYY-MM-DD"
+                  :disabled="!editMode[(row_num - 1) * coverColNum + col_num - 1]"
               />
             </el-col>
           </el-row>
@@ -36,12 +38,14 @@
             <el-col :span="12"
             >
               <el-rate v-model="allBooksDataSource[(row_num - 1) * coverColNum + col_num - 1].rating"
+                       :disabled="!editMode[(row_num - 1) * coverColNum + col_num - 1]"
               />
             </el-col>
             <el-col :span="12">
               <el-select
                   class="m-2"
                   placeholder="选择类型"
+                  :disabled="!editMode[(row_num - 1) * coverColNum + col_num - 1]"
               >
                 <el-option
                     v-for="tp in bookType"
@@ -54,11 +58,17 @@
           </el-row>
           <el-row class="mb-2">
             <el-button
-                type="warning"
-            >编辑
+                :type="this.editMode[(row_num - 1) * coverColNum + col_num - 1] ? 'info' : 'primary'"
+                @click="this.editMode[(row_num - 1) * coverColNum + col_num - 1]=!this.editMode[(row_num - 1) * coverColNum + col_num - 1]"
+                ref="editButton"
+            >{{
+                editMode[(row_num - 1) * coverColNum + col_num - 1] ? editCancelButtonText : editButtonText
+              }}
             </el-button
             >
             <el-button
+                @click="clickSaveButton(allBooksDataSource[(row_num-1)* coverColNum+col_num-1],(row_num-1)* coverColNum+col_num-1)"
+                :disabled="!this.editMode[(row_num - 1) * coverColNum + col_num - 1]"
                 type="warning"
             >保存
             </el-button
@@ -76,8 +86,8 @@
           </el-row>
         </div>
 
-        <!--      <el-image-->
-        <!--          :src="`http://172.17.18.115:8089/static/covers/${allBooksDataSource[(row_num-1)*coverColNum+col_num-1]?.id}.webp`"></el-image>-->
+        <!--        <el-image-->
+        <!--            :src="`http://172.17.18.115:8089/static/covers/${allBooksDataSource[(row_num-1)*coverColNum+col_num-1]?.id}.webp`"></el-image>-->
       </el-col>
     </el-row>
     <el-row>
@@ -90,21 +100,47 @@
       <el-button @click="clcikExitButton">退出全屏</el-button>
       <el-button @click="clickPreviousPic">上一页</el-button>
       <el-button @click="clickNextPic">下一页</el-button>
-      <el-button>单/双页切换</el-button>
+      <el-button v-if="dualPageEnable" @click="clickPageMatch">页码匹配</el-button>
       <el-button type="primary" style="margin-left: 16px" @click="drawer = true">
-        打开抽屉
+        更多设置
       </el-button>
+
       <el-drawer
           v-model="drawer"
-          title="I am the title"
+          title="更多设置"
           direction="btt"
       >
-        <span>Hi, there!</span>
+        <el-row class="moresetting">
+          <el-switch
+              v-model="this.dualPageEnable"
+              style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+              active-text="双页显示"
+              inactive-text="单页显示"
+          />
+          <el-switch
+              v-model="this.ImgHeightMode"
+              style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+              active-text="浏览器一页模式"
+              inactive-text="图片高度模式"
+          />
+        </el-row>
+        <br/>
+        <el-switch
+            v-model="this.showCoverSeparately"
+            style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+            active-text="单独显示封面"
+            inactive-text="合并显示封面"
+        />
+
+        <!--        <el-button @click="clickDualPageEnable">单/双页切换</el-button>-->
       </el-drawer>
-      <p>currentPage:{{ this.page }} -- bookLength:{{ this.CurrentBookLength }}</p>
+      <el-slider class="page_slider" v-model="this.page" :min="1" :max="this.CurrentBookLength">page</el-slider>
+      <!--      <p>currentPage:{{ this.page }} &#45;&#45; bookLength:{{ this.CurrentBookLength }}</p>-->
+
     </el-row>
-    <el-row>
-      <el-image :src="viewPicUrl" @click="clickNextPic" fit="contain" usemap="#planetmap"></el-image>
+    <el-row class="fullScreenContainer">
+      <img v-if="dualPageEnableComputed" :src="viewPicUrlPlusOne" @click="clickNextPic" class="fullScreenImg">
+      <img :src="viewPicUrl" @click="clickNextPic" class="fullScreenImg">
     </el-row>
   </div>
 
@@ -132,18 +168,50 @@ export default {
         '完结漫画', '连载漫画'
       ],
       fullScreenViewMode: false,
+      editMode: [],
       drawer: false,
       //全屏模式下的bookid
       CurrentBookId: 1,
       //全屏模式下的页码数
       page: 1,
       //全屏模式下book的长度
-      CurrentBookLength: 0,
+      CurrentBookLength: 1,
+      editButtonText: '编辑',
+      editCancelButtonText: '取消编辑',
+      dualPageEnable: false,
+      showCoverSeparately: true,
+      ImgHeightMode: true,
     }
   },
   computed: {
     viewPicUrl() {
       return `http://172.17.18.115:8089/comicManager/${this.CurrentBookId}/bookPic/?page=${this.page}`;
+    },
+    viewPicUrlPlusOne() {
+      return `http://172.17.18.115:8089/comicManager/${this.CurrentBookId}/bookPic/?page=${this.page + 1}`;
+    },
+    dualPageEnableComputed() {
+      if (this.showCoverSeparately) {
+        if (this.dualPageEnable) {
+          if (this.page === 1) {
+            return false
+          } else {
+            return this.page + 1 <= this.CurrentBookLength;
+          }
+        } else {
+          return false
+        }
+      } else {
+        if (this.dualPageEnable) {
+          if (this.page === 1) {
+            return true
+          } else {
+            return this.page + 1 <= this.CurrentBookLength;
+          }
+        } else {
+          return false
+        }
+      }
     }
   },
   created() {
@@ -191,6 +259,21 @@ export default {
     clcikExitButton() {
       this.fullScreenViewMode = false
     },
+    clickSaveButton(data, index) {
+      console.log('clickSaveButton', data, index)
+      this.editOneBook(data, index)
+
+    },
+    clickDualPageEnable() {
+      this.dualPageEnable = !this.dualPageEnable
+    },
+    clickPageMatch() {
+      if (this.page + 1 > this.CurrentBookLength) {
+        ElMessage({message: 'last page!', type: 'warning'})
+      } else {
+        this.page += 1
+      }
+    },
     clcikImgLeft() {
       console.log('clcikImgLeft')
     },
@@ -218,18 +301,36 @@ export default {
       )
     },
     clickNextPic() {
-      if (this.page + 1 > this.CurrentBookLength) {
-        ElMessage({message: 'last page!', type: 'warning'})
+      if (this.dualPageEnableComputed) {
+        if (this.page + 2 > this.CurrentBookLength) {
+          ElMessage({message: 'last page!', type: 'warning'})
+        } else {
+          this.page += 2
+        }
       } else {
-        this.page += 1
+        if (this.page + 1 > this.CurrentBookLength) {
+          ElMessage({message: 'last page!', type: 'warning'})
+        } else {
+          this.page += 1
+        }
       }
+
     },
     clickPreviousPic() {
-      if (this.page - 1 < 1) {
-        ElMessage({message: 'first page!', type: 'warning'})
+      if (this.dualPageEnable && this.page !== 2) {
+        if (this.page - 2 < 1) {
+          ElMessage({message: 'first page!11111111111', type: 'warning'})
+        } else {
+          this.page -= 2
+        }
       } else {
-        this.page -= 1
+        if (this.page - 1 < 1) {
+          ElMessage({message: 'first page!22222222222', type: 'warning'})
+        } else {
+          this.page -= 1
+        }
       }
+
     },
     getAllBooks() {
       axios({
@@ -244,8 +345,10 @@ export default {
               this.allBooksDataSource = response.data.results
               this.total = response.data.count
               this.row_conut = Math.ceil(this.allBooksDataSource.length / this.coverColNum)
-              console.log('getAllBooks', 'this.row_conut', this.row_conut, 'this.coverColNum', this.coverColNum, ' this.allBooksDataSource', this.allBooksDataSource)
+              this.editMode = new Array(this.row_conut * this.coverColNum).fill(false)
+              console.log('getAllBooks', 'this.row_conut', this.row_conut, 'this.coverColNum', this.coverColNum, ' this.allBooksDataSource', this.allBooksDataSource, 'editMode', this.editMode)
               // this.pathCount = response.data.count
+
             }
           }
       ).catch(
@@ -254,10 +357,55 @@ export default {
           }
       )
     },
+    editOneBook(bookData, index) {
+      axios({
+        method: 'put',
+        url: `/comicManager/${bookData.id}/`,
+        baseURL: 'http://172.17.18.115:8089',
+        data: {
+          "author": bookData.author,
+          "publishDate": bookData.publishDate,
+          "rating": bookData.rating,
+          "type": bookData.type
+        }
+      }).then(
+          (response) => {
+            console.log(response)
+            if (response.status == 200) {
+              this.editMode[index] = false
+            }
+          }
+      ).catch(
+          (err) => {
+            console.log(err)
+          }
+      )
+    }
   }
 }
 </script>
 
 <style scoped>
+.fullScreenContainer {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+}
+
+.fullScreenImg {
+  /*width: 100%;*/
+  image-rendering: auto;
+  height: 100vh;
+
+}
+
+.page_slider {
+  width: calc(100% - 505px);
+  margin-left: 20px;
+}
+.el-switch{
+  margin-left: 20px;
+}
 
 </style>
