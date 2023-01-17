@@ -28,6 +28,8 @@ export default {
     return {
       activeName: 'libsetting'
     }
+  },
+  mounted() {
   }
 }
 </script>

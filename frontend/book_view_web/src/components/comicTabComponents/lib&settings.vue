@@ -1,5 +1,5 @@
 <template>
-  <el-table :data="tableData" stripe style="width: 100%">
+  <el-table :data="tableData" stripe style="width: 100%" >
     <el-table-column prop="folderPath" label="folderPath" min-width="4"/>
     <el-table-column label="Operations" min-width="1">
       <template #default="scope">
@@ -40,7 +40,14 @@ export default {
       currentLibPage: 1,
     }
   },
+
+  created() {
+
+  },
   mounted() {
+    // console.log('进来了', process)
+    // console.clear()
+    // console.log(process.env)
     this.getLibPath()
   },
   methods: {
@@ -48,11 +55,11 @@ export default {
       axios({
         method: 'get',
         url: '/comicManager/lib/',
-        baseURL: 'http://172.17.18.115:8089',
+        baseURL: process.env.VUE_APP_BASE_URL,
         params: {'page': this.currentLibPage}
       }).then(
           (response) => {
-            console.log(response)
+            // console.log(response)
             if (response.status === 200) {
               this.tableData = response.data.results
               this.pathCount = response.data.count
@@ -67,7 +74,7 @@ export default {
     //  提交
     btnChange() {
       axios({
-        method: 'post', url: '/comicManager/lib/', baseURL: 'http://172.17.18.115:8089', data: {
+        method: 'post', url: '/comicManager/lib/', baseURL: process.env.VUE_APP_BASE_URL, data: {
           'folderPath': this.pathinput
         }
       }).then(
@@ -85,7 +92,7 @@ export default {
     },
     //删除
     handleDelete(e1, e2) {
-      axios({method: 'delete', url: `/comicManager/lib/${e2.id}/`, baseURL: 'http://172.17.18.115:8089'}).then(
+      axios({method: 'delete', url: `/comicManager/lib/${e2.id}/`, baseURL: process.env.VUE_APP_BASE_URL}).then(
           (response) => {
             if (response.status === 204)
               console.log(response)
@@ -99,7 +106,7 @@ export default {
     },
     //修改
     // handleEdit(e1, e2) {
-    //   axios({method: 'put', url: `/comicManager/lib/${e2.id}/`, baseURL: 'http://172.17.18.115:8089'}).then(
+    //   axios({method: 'put', url: `/comicManager/lib/${e2.id}/`, baseURL: process.env.VUE_APP_BASE_URL}).then(
     //       (response) => {
     //         if (response.status === 204)
     //           console.log(response)
@@ -116,7 +123,7 @@ export default {
       axios({
         method: 'get',
         url: '/comicManager/scan/',
-        baseURL: 'http://172.17.18.115:8089'
+        baseURL: process.env.VUE_APP_BASE_URL
       }).then(
           (response) => {
             console.log(response)

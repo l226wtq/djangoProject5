@@ -12,9 +12,10 @@
         <div v-if="(row_num - 1) * coverColNum + col_num - 1<this.allBooksDataSource.length">
           <p>{{ allBooksDataSource[(row_num - 1) * coverColNum + col_num - 1].title }}</p>
           <el-image
-              :src="`http://172.17.18.115:8089/static/covers/${allBooksDataSource[(row_num - 1) * coverColNum + col_num - 1]?.id}.webp`"
+              :src="`${api}/static/covers/${allBooksDataSource[(row_num - 1) * coverColNum + col_num - 1]?.id}.webp`"
               @click="clcikThumbnail(allBooksDataSource[(row_num - 1) * coverColNum + col_num - 1].id)"></el-image>
           <el-row>
+
             <el-col :span="12">
               <el-input
                   clearable
@@ -87,7 +88,7 @@
         </div>
 
         <!--        <el-image-->
-        <!--            :src="`http://172.17.18.115:8089/static/covers/${allBooksDataSource[(row_num-1)*coverColNum+col_num-1]?.id}.webp`"></el-image>-->
+        <!--            :src="`${process.env.VUE_APP_BASE_URL}/static/covers/${allBooksDataSource[(row_num-1)*coverColNum+col_num-1]?.id}.webp`"></el-image>-->
       </el-col>
     </el-row>
     <el-row>
@@ -181,14 +182,15 @@ export default {
       dualPageEnable: false,
       showCoverSeparately: true,
       ImgHeightMode: true,
+      api: '',
     }
   },
   computed: {
     viewPicUrl() {
-      return `http://172.17.18.115:8089/comicManager/${this.CurrentBookId}/bookPic/?page=${this.page}`;
+      return `${process.env.VUE_APP_BASE_URL}/comicManager/${this.CurrentBookId}/bookPic/?page=${this.page}`;
     },
     viewPicUrlPlusOne() {
-      return `http://172.17.18.115:8089/comicManager/${this.CurrentBookId}/bookPic/?page=${this.page + 1}`;
+      return `${process.env.VUE_APP_BASE_URL}/comicManager/${this.CurrentBookId}/bookPic/?page=${this.page + 1}`;
     },
     dualPageEnableComputed() {
       if (this.showCoverSeparately) {
@@ -217,7 +219,7 @@ export default {
   created() {
     console.log('执行了create')
     // this.getAllBooks()
-
+    this.api = process.env.VUE_APP_BASE_URL
   },
   mounted() {
     this.getAllBooks()
@@ -240,7 +242,7 @@ export default {
       axios({
         method: 'get',
         url: `/comicManager/${id}/bookLength`,
-        baseURL: 'http://172.17.18.115:8089'
+        baseURL: process.env.VUE_APP_BASE_URL
       }).then(
           (response) => {
             console.log(response)
@@ -285,7 +287,7 @@ export default {
       axios({
         method: 'delete',
         url: `/comicManager/${id}/bookDelete`,
-        baseURL: 'http://172.17.18.115:8089'
+        baseURL: process.env.VUE_APP_BASE_URL
       }).then(
           (response) => {
             console.log(response)
@@ -336,7 +338,7 @@ export default {
       axios({
         method: 'get',
         url: '/comicManager/',
-        baseURL: 'http://172.17.18.115:8089',
+        baseURL: process.env.VUE_APP_BASE_URL,
         params: {'page': this.current_page}
       }).then(
           (response) => {
@@ -361,7 +363,7 @@ export default {
       axios({
         method: 'put',
         url: `/comicManager/${bookData.id}/`,
-        baseURL: 'http://172.17.18.115:8089',
+        baseURL: process.env.VUE_APP_BASE_URL,
         data: {
           "author": bookData.author,
           "publishDate": bookData.publishDate,
@@ -404,7 +406,8 @@ export default {
   width: calc(100% - 505px);
   margin-left: 20px;
 }
-.el-switch{
+
+.el-switch {
   margin-left: 20px;
 }
 

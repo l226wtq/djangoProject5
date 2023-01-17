@@ -1,7 +1,7 @@
-import { createApp } from 'vue'
+import {createApp} from 'vue'
 import App from './App.vue'
 import 'devextreme/dist/css/dx.light.css';
-import { createRouter, createWebHashHistory } from 'vue-router'
+import {createRouter, createWebHashHistory} from 'vue-router'
 
 import VueClipboard from 'vue3-clipboard'
 
@@ -13,9 +13,13 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 
 
+console.log('api接口url', process.env.NODE_ENV, process.env.VUE_APP_BASE_URL)
+
+
 //中文界面或提示（翻译不全）
 import zhMessages from "devextreme/localization/messages/zh.json";
-import { loadMessages, locale } from "devextreme/localization";
+import {loadMessages, locale} from "devextreme/localization";
+
 loadMessages(zhMessages);
 locale(navigator.language);
 // // 货币
@@ -43,17 +47,17 @@ const homepage = () => import("./components/PSIhomePage.vue")
 // 每个路由都需要映射到一个组件。
 // 我们后面再讨论嵌套路由。
 const routes = [
-    
-    { path: '', component: homepage },
-    { path: '/homepage', component: homepage },
-    { path: '/warehousing', component: PSIwarehousingMainView },
-    { path: '/warehousingpurchase', component: PSIwarehousingPurchaseMainView },
-    { path: '/warehousingproduct', component: PSIwarehousingPorductMainView },
-    { path: '/checkout', component: PSIcheckoutMainView },
-    { path: '/mainlist', component: PSImainListView },
-    { path: '/dbexportbackup', component: dbExportBackup },
-    { path: '/sqldocument', component: sqlDocumentMainView },
-    { path: '/sqldocument/:sysType', component: sqlDocumentMainView },
+
+    {path: '', component: homepage},
+    {path: '/homepage', component: homepage},
+    {path: '/warehousing', component: PSIwarehousingMainView},
+    {path: '/warehousingpurchase', component: PSIwarehousingPurchaseMainView},
+    {path: '/warehousingproduct', component: PSIwarehousingPorductMainView},
+    {path: '/checkout', component: PSIcheckoutMainView},
+    {path: '/mainlist', component: PSImainListView},
+    {path: '/dbexportbackup', component: dbExportBackup},
+    {path: '/sqldocument', component: sqlDocumentMainView},
+    {path: '/sqldocument/:sysType', component: sqlDocumentMainView},
 ]
 // 3. 创建路由实例并传递 `routes` 配置
 // 你可以在这里输入更多的配置，但我们在这里
@@ -63,7 +67,6 @@ const router = createRouter({
     history: createWebHashHistory(),
     routes, // `routes: routes` 的缩写
 })
-
 const app = createApp(App)
 app.use(router)
 app.use(VueClipboard, {
@@ -74,3 +77,4 @@ app.use(hljsVuePlugin)
 app.use(ElementPlus)
 
 app.mount('#app')
+
